@@ -5,7 +5,11 @@ Release: 1%{?dist}
 License: BSD
 Group: Development/Debuggers
 URL: https://strace.io
+%if 0%{?fedora} >= 12 || 0%{?centos} >= 6 || 0%{?rhel} >= 6 || 0%{?suse_version} >= 1200
 Source: https://strace.io/files/%{version}/strace-%{version}.tar.xz
+%else
+Source: https://strace.io/files/%{version}/strace-%{version}.tar.gz
+%endif
 BuildRequires: gcc
 %if 0%{?fedora} >= 20 || 0%{?centos} >= 6 || 0%{?rhel} >= 6
 %define buildrequires_stacktrace BuildRequires: elfutils-devel binutils-devel
