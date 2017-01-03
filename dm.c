@@ -41,6 +41,13 @@
 
 # if DM_VERSION_MAJOR == 4
 
+#  if defined HAVE_STRUCT_DM_IOCTL_DATA && HAVE_STRUCT_DM_IOCTL_DATA
+#   define STRUCT_DM_IOCTL_SIZE (offsetof(struct dm_ioctl, data))
+#  else
+#   define STRUCT_DM_IOCTL_SIZE \
+	(sizeof(struct dm_ioctl) - ALIGNOF(struct dm_ioctl))
+#  endif
+
 /* Definitions for command which have been added later */
 
 #  ifndef DM_LIST_VERSIONS
@@ -484,7 +491,7 @@ dm_known_ioctl(struct tcb *const tcp, const unsigned int code,
 		ioc = alloca(sizeof(*ioc));
 	}
 
-	if ((umoven(tcp, arg, offsetof(struct dm_ioctl, data), ioc) < 0) ||
+	if ((umoven(tcp, arg, STRUCT_DM_IOCTL_SIZE, ioc) < 0) ||
 	    (ioc->data_size < offsetof(struct dm_ioctl, data_size))) {
 		if (entering(tcp))
 			free(ioc);
@@ -531,7 +538,7 @@ dm_known_ioctl(struct tcb *const tcp, const unsigned int code,
 
 	PRINT_FIELD_U(", ", *ioc, data_size);
 
-	if (ioc->data_size < offsetof(struct dm_ioctl, data)) {
+	if (ioc->data_size < STRUCT_DM_IOCTL_SIZE) {
 		tprints_comment("data_size too small");
 		goto skip;
 	}
