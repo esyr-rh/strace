@@ -303,6 +303,8 @@ struct tcb {
 #define syscall_delayed(tcp)	((tcp)->flags & TCB_DELAYED)
 #define syscall_tampered_nofail(tcp) ((tcp)->flags & TCB_TAMPERED_NO_FAIL)
 
+#include "tracing_backend.h"
+
 #include "xlat.h"
 
 extern const struct xlat addrfams[];
@@ -438,8 +440,6 @@ extern void syscall_exiting_finish(struct tcb *);
 extern void count_syscall(struct tcb *, const struct timespec *);
 extern void call_summary(FILE *);
 
-extern void clear_regs(struct tcb *tcp);
-extern int get_scno(struct tcb *);
 extern kernel_ulong_t get_rt_sigframe_addr(struct tcb *);
 
 /**
@@ -493,8 +493,6 @@ static inline int set_tcb_priv_ulong(struct tcb *tcp, unsigned long val)
 /**
  * @return 0 on success, -1 on error.
  */
-extern int
-umoven(struct tcb *, kernel_ulong_t addr, unsigned int len, void *laddr);
 #define umove(pid, addr, objp)	\
 	umoven((pid), (addr), sizeof(*(objp)), (void *) (objp))
 
@@ -564,15 +562,6 @@ umoven_or_printaddr_ignore_syserror(struct tcb *tcp, const kernel_ulong_t addr,
 #define umove_or_printaddr_ignore_syserror(pid, addr, objp)	\
 	umoven_or_printaddr_ignore_syserror((pid), (addr), sizeof(*(objp)), \
 					    (void *) (objp))
-
-/**
- * @return strlen + 1 on success, 0 on success and no NUL seen, -1 on error.
- */
-extern int
-umovestr(struct tcb *, kernel_ulong_t addr, unsigned int len, char *laddr);
-
-extern int upeek(struct tcb *tcp, unsigned long, kernel_ulong_t *);
-extern int upoke(struct tcb *tcp, unsigned long, kernel_ulong_t);
 
 #if HAVE_ARCH_GETRVAL2
 extern long getrval2(struct tcb *);
