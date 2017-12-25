@@ -525,7 +525,7 @@ tamper_with_syscall_entering(struct tcb *tcp, unsigned int *signo)
 				? (kernel_long_t) shuffle_scno(opts->data.scno)
 				: -1;
 
-			if (!arch_set_scno(tcp, scno)) {
+			if (!set_scno(tcp, scno)) {
 				tcp->flags |= TCB_TAMPERED;
 				if (scno != -1)
 					tcp->flags |= TCB_TAMPERED_NO_FAIL;
@@ -570,7 +570,7 @@ tamper_with_syscall_exiting(struct tcb *tcp)
 		kernel_long_t u_rval = tcp->u_rval;
 
 		tcp->u_rval = inject_rval;
-		if (arch_set_success(tcp)) {
+		if (set_success(tcp)) {
 			tcp->u_rval = u_rval;
 		} else {
 			update_tcb = true;
@@ -583,7 +583,7 @@ tamper_with_syscall_exiting(struct tcb *tcp)
 			unsigned long u_error = tcp->u_error;
 
 			tcp->u_error = new_error;
-			if (arch_set_error(tcp)) {
+			if (set_error(tcp)) {
 				tcp->u_error = u_error;
 			} else {
 				update_tcb = true;
@@ -1240,6 +1240,25 @@ get_scno(struct tcb *tcp)
 
 	return 1;
 }
+
+int
+set_scno(struct tcb *tcp, kernel_ulong_t scno)
+{
+	return arch_set_scno(tcp, scno);
+}
+
+int
+set_error(struct tcb *tcp)
+{
+	return arch_set_error(tcp);
+}
+
+int
+set_success(struct tcb *tcp)
+{
+	return arch_set_success(tcp);
+}
+
 
 #ifdef ptrace_getregset_or_getregs
 # define get_syscall_result_regs get_regs
