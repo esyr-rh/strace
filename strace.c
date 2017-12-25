@@ -2347,13 +2347,29 @@ print_event_exit(struct tcb *tcp)
 	line_ended();
 }
 
+struct ptrace_trace_loop_data {
+	siginfo_t si;
+	unsigned int restart_op;
+};
+
+void *
+alloc_trace_loop_storage(void)
+{
+	return xmalloc(sizeof(struct ptrace_trace_loop_data));
+}
+
 static enum trace_event
-next_event(int *pstatus, siginfo_t *si)
+next_event(int *pstatus, void *data)
 {
 	int pid;
 	int status;
 	struct tcb *tcp;
 	struct rusage ru;
+
+	struct ptrace_trace_loop_data *trace_loop_data = data;
+	siginfo_t *si = &trace_loop_data->si;
+
+	trace_loop_data->restart_op = PTRACE_SYSCALL;
 
 	if (interrupted)
 		return TE_BREAK;
@@ -2558,11 +2574,99 @@ trace_syscall(struct tcb *tcp, unsigned int *sig)
 	}
 }
 
+siginfo_t *
+get_siginfo(void *data)
+{
+	struct ptrace_trace_loop_data *trace_loop_data = data;
+
+	return &trace_loop_data->si;
+}
+
+void
+handle_group_stop(unsigned int *restart_sig, void *data)
+{
+	struct ptrace_trace_loop_data *trace_loop_data = data;
+
+	if (!use_seize)
+		return;
+
+	/*
+	 * This ends ptrace-stop, but does *not* end group-stop.
+	 * This makes stopping signals work properly on straced
+	 * process (that is, process really stops. It used to
+	 * continue to run).
+	 */
+	trace_loop_data->restart_op = PTRACE_LISTEN;
+	*restart_sig = 0;
+}
+
+void
+handle_exec(struct tcb **current_tcp, unsigned int *restart_sig, void *data)
+{
+	/*
+	 * Check that we are inside syscall now (next event after
+	 * PTRACE_EVENT_EXEC should be for syscall exiting).  If it is
+	 * not the case, we might have a situation when we attach to a
+	 * process and the first thing we see is a PTRACE_EVENT_EXEC
+	 * and all the following syscall state tracking is screwed up
+	 * otherwise.
+	 */
+	if (entering(*current_tcp)) {
+		int ret;
+
+		error_msg("Stray PTRACE_EVENT_EXEC from pid %d"
+			  ", trying to recover...",
+			  (*current_tcp)->pid);
+
+		(*current_tcp)->flags |= TCB_RECOVERING;
+		ret = trace_syscall(*current_tcp, restart_sig);
+		(*current_tcp)->flags &= ~TCB_RECOVERING;
+
+		if (ret < 0) {
+			/* The reason is described in TE_SYSCALL_STOP */
+			return true;
+		}
+	}
+
+	/*
+	 * Under Linux, execve changes pid to thread leader's pid,
+	 * and we see this changed pid on EVENT_EXEC and later,
+	 * execve sysexit. Leader "disappears" without exit
+	 * notification. Let user know that, drop leader's tcb,
+	 * and fix up pid in execve thread's tcb.
+	 * Effectively, execve thread's tcb replaces leader's tcb.
+	 *
+	 * BTW, leader is 'stuck undead' (doesn't report WIFEXITED
+	 * on exit syscall) in multithreaded programs exactly
+	 * in order to handle this case.
+	 *
+	 * PTRACE_GETEVENTMSG returns old pid starting from Linux 3.0.
+	 * On 2.6 and earlier, it can return garbage.
+	 */
+	if (os_release >= KERNEL_VERSION(3, 0, 0))
+		set_current_tcp(maybe_switch_tcbs(*current_tcp,
+						  (*current_tcp)->pid));
+}
+
+bool
+restart_process(struct tcb *current_tcp, unsigned int restart_sig,
+		       void *data)
+{
+	struct ptrace_trace_loop_data *trace_loop_data = data;
+	unsigned int restart_op = trace_loop_data->restart_op;
+
+	if (ptrace_restart(restart_op, current_tcp, restart_sig) < 0) {
+		/* Note: ptrace_restart emitted error message */
+		return false;
+	}
+
+	return true;
+}
+
 /* Returns true iff the main trace loop has to continue. */
 static bool
-dispatch_event(enum trace_event ret, int *pstatus, siginfo_t *si)
+dispatch_event(enum trace_event ret, int *pstatus, void *data)
 {
-	unsigned int restart_op = PTRACE_SYSCALL;
 	unsigned int restart_sig = 0;
 
 	switch (ret) {
@@ -2592,10 +2696,13 @@ dispatch_event(enum trace_event ret, int *pstatus, siginfo_t *si)
 		}
 		break;
 
-	case TE_SIGNAL_DELIVERY_STOP:
+	case TE_SIGNAL_DELIVERY_STOP: {
+		siginfo_t *si = (siginfo_t *) get_siginfo(data);
+
 		restart_sig = WSTOPSIG(*pstatus);
 		print_stopped(current_tcp, si, restart_sig);
 		break;
+	}
 
 	case TE_SIGNALLED:
 		print_signalled(current_tcp, current_tcp->pid, *pstatus);
@@ -2605,16 +2712,9 @@ dispatch_event(enum trace_event ret, int *pstatus, siginfo_t *si)
 	case TE_GROUP_STOP:
 		restart_sig = WSTOPSIG(*pstatus);
 		print_stopped(current_tcp, NULL, restart_sig);
-		if (use_seize) {
-			/*
-			 * This ends ptrace-stop, but does *not* end group-stop.
-			 * This makes stopping signals work properly on straced
-			 * process (that is, process really stops. It used to
-			 * continue to run).
-			 */
-			restart_op = PTRACE_LISTEN;
-			restart_sig = 0;
-		}
+
+		handle_group_stop(&restart_sig, data);
+
 		break;
 
 	case TE_EXITED:
@@ -2623,49 +2723,7 @@ dispatch_event(enum trace_event ret, int *pstatus, siginfo_t *si)
 		return true;
 
 	case TE_STOP_BEFORE_EXECVE:
-		/*
-		 * Check that we are inside syscall now (next event after
-		 * PTRACE_EVENT_EXEC should be for syscall exiting).  If it is
-		 * not the case, we might have a situation when we attach to a
-		 * process and the first thing we see is a PTRACE_EVENT_EXEC
-		 * and all the following syscall state tracking is screwed up
-		 * otherwise.
-		 */
-		if (entering(current_tcp)) {
-			int ret;
-
-			error_msg("Stray PTRACE_EVENT_EXEC from pid %d"
-				  ", trying to recover...",
-				  current_tcp->pid);
-
-			current_tcp->flags |= TCB_RECOVERING;
-			ret = trace_syscall(current_tcp, &restart_sig);
-			current_tcp->flags &= ~TCB_RECOVERING;
-
-			if (ret < 0) {
-				/* The reason is described in TE_SYSCALL_STOP */
-				return true;
-			}
-		}
-
-		/*
-		 * Under Linux, execve changes pid to thread leader's pid,
-		 * and we see this changed pid on EVENT_EXEC and later,
-		 * execve sysexit. Leader "disappears" without exit
-		 * notification. Let user know that, drop leader's tcb,
-		 * and fix up pid in execve thread's tcb.
-		 * Effectively, execve thread's tcb replaces leader's tcb.
-		 *
-		 * BTW, leader is 'stuck undead' (doesn't report WIFEXITED
-		 * on exit syscall) in multithreaded programs exactly
-		 * in order to handle this case.
-		 *
-		 * PTRACE_GETEVENTMSG returns old pid starting from Linux 3.0.
-		 * On 2.6 and earlier, it can return garbage.
-		 */
-		if (os_release >= KERNEL_VERSION(3, 0, 0))
-			set_current_tcp(maybe_switch_tcbs(current_tcp,
-							  current_tcp->pid));
+		handle_exec(&current_tcp, &restart_sig, data);
 
 		if (detach_on_execve) {
 			if (current_tcp->flags & TCB_SKIP_DETACH_ON_FIRST_EXEC) {
@@ -2690,11 +2748,11 @@ dispatch_event(enum trace_event ret, int *pstatus, siginfo_t *si)
 	if (syscall_delayed(current_tcp))
 		return true;
 
-	if (ptrace_restart(restart_op, current_tcp, restart_sig) < 0) {
-		/* Note: ptrace_restart emitted error message */
+	if (!restart_process(current_tcp, restart_sig, data)) {
 		exit_code = 1;
 		return false;
 	}
+
 	return true;
 }
 
@@ -2820,8 +2878,9 @@ main(int argc, char *argv[])
 	exit_code = !nprocs;
 
 	int status;
-	siginfo_t si;
-	while (dispatch_event(next_event(&status, &si), &status, &si))
+	void *data = alloc_trace_loop_storage();
+
+	while (dispatch_event(next_event(&status, data), &status, data))
 		;
 	terminate();
 }
