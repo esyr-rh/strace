@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -eu
 
 # Check -ff option.
 
@@ -7,20 +7,48 @@
 run_prog_skip_if_failed \
 	kill -0 $$
 
-../set_ptracer_any ../sleep 3 > "$OUT" &
-tracee_pid=$!
+OUT1=$OUT-1
+OUT2=$OUT-2
+OUT3=$OUT-3
+OUT4=$OUT-4
+OUT5=$OUT-5
 
-while ! [ -s "$OUT" ]; do
-	kill -0 $tracee_pid 2> /dev/null ||
+../set_ptracer_any ../sleep 3 > "$OUT1" &
+tracee_pid1=$!
+
+../set_ptracer_any ../sleep 3 > "$OUT2" &
+tracee_pid2=$!
+
+../set_ptracer_any ../sleep 3 > "$OUT3" &
+tracee_pid3=$!
+
+../set_ptracer_any ../sleep 3 > "$OUT4" &
+tracee_pid4=$!
+
+../set_ptracer_any ../sleep 3 > "$OUT5" &
+tracee_pid5=$!
+
+while ! [ -s "$OUT1" ] || ! [ -s "$OUT2" ] || ! [ -s "$OUT3" ] || ! [ -s "$OUT4" ] || ! [ -s "$OUT5" ]; do
+	kill -0 $tracee_pid1 $tracee_pid2 $tracee_pid3 $tracee_pid4 $tracee_pid5 2> /dev/null ||
 		fail_ 'set_ptracer_any sleep failed'
 done
 
-run_strace -a14 -eexit_group -ff -p $tracee_pid
+run_strace -a14 -eexit_group -ff -d -p $tracee_pid1 -p $tracee_pid2 -p $tracee_pid3 -p $tracee_pid4 -p $tracee_pid5
 
 # check that output matches
-match_diff "$LOG.$tracee_pid"
+echo checking output 1 >&2
+match_diff "$LOG.$tracee_pid1"
+echo checking output 2 >&2
+match_diff "$LOG.$tracee_pid2"
+echo checking output 3 >&2
+match_diff "$LOG.$tracee_pid3"
+echo checking output 4 >&2
+match_diff "$LOG.$tracee_pid4"
+echo checking output 5 >&2
+match_diff "$LOG.$tracee_pid5"
 
 # check that no other output files have been created
 set -- "$LOG".*
-[ "$LOG.$tracee_pid" = "$*" ] ||
-	fail_ "too many output files: $*"
+remainder=$(echo " $* " | sed "s/ $LOG.$tracee_pid1 / /; s/ $LOG.$tracee_pid2 / /; s/ $LOG.$tracee_pid3 / /; s/ $LOG.$tracee_pid4 / /; s/ $LOG.$tracee_pid5 / /")
+[ "$remainder" = " " ] ||
+	fail_ "excess output files: $*"
