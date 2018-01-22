@@ -557,6 +557,8 @@ tvprintf(const char *const fmt, va_list args)
 			outf_perror(current_tcp);
 		} else
 			current_tcp->curcol += n;
+		debug_func_msg("[pid %u] curcol: %d",
+			       current_tcp->pid, current_tcp->curcol);
 	}
 }
 
@@ -580,6 +582,8 @@ tprints(const char *str)
 		int n = fputs_unlocked(str, current_tcp->outf);
 		if (n >= 0) {
 			current_tcp->curcol += strlen(str);
+			debug_func_msg("[pid %u] curcol: %d",
+				       current_tcp->pid, current_tcp->curcol);
 			return;
 		}
 		/* very unlikely due to fputs_unlocked buffering */
@@ -616,14 +620,17 @@ flush_tcp_output(const struct tcb *const tcp)
 }
 
 void
-line_ended(void)
+line_ended_(const char *func, int line)
 {
 	if (current_tcp) {
 		current_tcp->curcol = 0;
+		debug_msg("[%s:%d][pid %d] current_tcp curcol reset", func, line, current_tcp->pid);
 		flush_tcp_output(current_tcp);
 	}
 	if (printing_tcp) {
-		printing_tcp->curcol = 0;
+		debug_msg("[%s:%d][pid %d] printing_tcp curcol reset", func, line, printing_tcp->pid);
+		if (followfork < 2)
+			printing_tcp->curcol = 0;
 		printing_tcp = NULL;
 	}
 }
@@ -2398,6 +2405,10 @@ trace_syscall(struct tcb *tcp, unsigned int *sig)
 {
 	if (entering(tcp)) {
 		int res = syscall_entering_decode(tcp);
+
+		debug_func_msg("[pid %d] entering: scno: %#" PRI_klx
+			       ", res: %d", tcp->pid, tcp->scno, res);
+
 		switch (res) {
 		case 0:
 			return 0;
@@ -2409,6 +2420,10 @@ trace_syscall(struct tcb *tcp, unsigned int *sig)
 	} else {
 		struct timeval tv = {};
 		int res = syscall_exiting_decode(tcp, &tv);
+
+		debug_func_msg("[pid %d] exiting: scno: %#" PRI_klx
+			       ", res: %d", tcp->pid, tcp->scno, res);
+
 		if (res != 0) {
 			res = syscall_exiting_trace(tcp, tv, res);
 		}

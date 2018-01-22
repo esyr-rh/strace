@@ -795,7 +795,8 @@ extern void print_user_desc(struct tcb *, kernel_ulong_t addr,
  */
 extern struct tcb *printing_tcp;
 extern void printleader(struct tcb *);
-extern void line_ended(void);
+extern void line_ended_(const char *func, int line);
+#define line_ended() line_ended_(__func__, __LINE__)
 extern void tabto(void);
 extern void tprintf(const char *fmt, ...) ATTRIBUTE_FORMAT((printf, 1, 2));
 extern void tprints(const char *str);
