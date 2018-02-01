@@ -175,12 +175,15 @@ typedef struct ioctlent {
 	unsigned int code;
 } struct_ioctlent;
 
-#define INJECT_F_SIGNAL 1
-#define INJECT_F_RETVAL 2
+#define INJECT_F_SIGNAL  0x1
+#define INJECT_F_RETVAL  0x2
+#define INJECT_F_SYSCALL 0x4
 
 struct inject_data {
-	uint16_t flags;
-	uint16_t signo;
+	uint8_t  flags;
+	/* The architecture with most _NSIG is MIPS, with 128 signals */
+	uint8_t  signo;
+	uint16_t syscall[SUPPORTED_PERSONALITIES];
 	kernel_long_t rval;
 };
 
@@ -253,6 +256,8 @@ struct tcb {
 				 * in the middle of a syscall */
 #define TCB_RECOVERING	0x400	/* We try to recover after detecting incorrect
 				 * syscall entering/exiting state */
+#define TCB_TAMPERED_NO_FAIL 0x800	/* We tamper tcb with syscall that
+					 * shouldn't fail. */
 
 /* qualifier flags */
 #define QUAL_TRACE	0x001	/* this system call should be traced */
@@ -275,6 +280,7 @@ struct tcb {
 #define hide_log(tcp)	((tcp)->flags & TCB_HIDE_LOG)
 #define syscall_tampered(tcp)	((tcp)->flags & TCB_TAMPERED)
 #define recovering(tcp)	((tcp)->flags & TCB_RECOVERING)
+#define syscall_tampered_nofail(tcp) ((tcp)->flags & TCB_TAMPERED_NO_FAIL)
 
 #include "xlat.h"
 

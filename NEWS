@@ -21,6 +21,8 @@ Noteworthy changes in release ?.?? (????-??-??)
   * Implemented block/character device number printing in -yy mode.
   * Known pixel/SDR format names are printed as comments for pixelformat fields
     in v4l2 structures.
+  * Implemented injection of a syscall with no side effects as a replacement for
+    injecting of an invalid syscall (-e inject=SET:syscall= option).
 
 * Bug fixes
   * Fixed build on m68k.
