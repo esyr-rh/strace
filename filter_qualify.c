@@ -137,6 +137,27 @@ parse_inject_token(const char *const token, struct inject_opts *const fopts,
 			/* F == F+0 */
 			fopts->step = 0;
 		}
+	} else if ((val = STR_STRIP_PREFIX(token, "syscall=")) != token) {
+		if (fopts->data.flags & INJECT_F_SYSCALL)
+			return false;
+
+		for (unsigned long p = 0; p < SUPPORTED_PERSONALITIES; ++p) {
+			kernel_long_t scno = scno_by_name(val, p, 0);
+
+			if (scno < 0)
+				return false;
+
+			/*
+			 * We want to inject only pure system calls with no side
+			 * effects.
+			 */
+			if (!(sysent_vec[p][scno].sys_flags & TRACE_PURE))
+				return false;
+
+			fopts->data.syscall[p] = scno;
+		}
+
+		fopts->data.flags |= INJECT_F_SYSCALL;
 	} else if ((val = STR_STRIP_PREFIX(token, "error=")) != token) {
 		if (fopts->data.flags & (INJECT_F_ERROR | INJECT_F_RETVAL))
 			return false;

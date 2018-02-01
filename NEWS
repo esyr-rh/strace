@@ -7,6 +7,8 @@ Noteworthy changes in release ?.?? (????-??-??)
     Whether -k option is compiled is now configured at build time
     using --enable-stacktrace option.
   * Added -X option for configuring xlat output formatting.
+  * Implemented injection of a syscall with no side effects as a replacement for
+    injecting of an invalid syscall (-e inject=SET:syscall= option).
 
 Noteworthy changes in release 4.22 (2018-04-05)
 ===============================================
