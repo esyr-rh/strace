@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# sparc-specific kern_features syscall
+
+. "${srcdir=.}/scno_tampering.sh"
+
+# $1 - # of run
+# $2 - value
+
+> "$LOG" || fail_ "failed to write $LOG"
+fault_args='-a16 -e trace=kern_features -e inject=kern_features:retval='
+args='../kern_features'
+
+run() {
+	$STRACE -o "$LOG.$1" $fault_args$2 $args $1 > "$EXP.$1" || {
+		rc=$?
+		if [ "$rc" -eq 77 ]; then
+			skip_ "$fault_args $args exited with code 77"
+		else
+			dump_log_and_fail_with "$STRACE -o $LOG.$1 $fault_args$2 $args > $EXP.$1 failed with code $?"
+		fi
+	}
+	match_diff "$LOG.$1" "$EXP.$1"
+}
+
+run_prog "$args" > /dev/null
+
+run 0 0
+run 1 1
+run 2 2
+
+case "$ARCH" in
+sparc)
+	run 3 0xfffffffe
+	run 4 0xffffffff
+	;;
+sparc64)
+	run 3 0xfffffffffffffffe
+	run 4 0xffffffffffffffff
+	;;
+esac
