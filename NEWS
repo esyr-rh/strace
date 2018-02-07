@@ -23,6 +23,7 @@ Noteworthy changes in release ?.?? (????-??-??)
     in v4l2 structures.
   * Implemented injection of a syscall with no side effects as a replacement for
     injecting of an invalid syscall (-e inject=SET:syscall= option).
+  * Enhanced decoding of kern_features syscall.
 
 * Bug fixes
   * Fixed build on m68k.
