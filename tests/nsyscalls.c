@@ -31,6 +31,7 @@
 #include "tests.h"
 #include "sysent.h"
 #include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -60,8 +61,12 @@ static const char *strace_name;
 static FILE *debug_out;
 #endif
 
+#if !defined __arm__
+# define __arm__ 0
+#endif
+
 static void
-test_syscall(const unsigned long nr)
+test_syscall(const kernel_ulong_t nr, bool print)
 {
 	static const kernel_ulong_t a[] = {
 		(kernel_ulong_t) 0xface0fedbadc0dedULL,
@@ -75,31 +80,43 @@ test_syscall(const unsigned long nr)
 	long rc = syscall(nr | SYSCALL_BIT,
 			  a[0], a[1], a[2], a[3], a[4], a[5]);
 
+	if (print) {
 #if DEBUG_PRINT
-	fprintf(debug_out, "%s: pid %d invalid syscall %#lx\n",
-		strace_name, getpid(), nr | SYSCALL_BIT);
+		fprintf(debug_out, "%s: pid %d invalid syscall %#llx\n",
+			strace_name, getpid(),
+			(unsigned long long) (nr | SYSCALL_BIT));
 #endif
 
 #ifdef LINUX_MIPSO32
-	printf("syscall(%#lx, %#lx, %#lx, %#lx, %#lx, %#lx, %#lx)"
-	       " = %ld ENOSYS (%m)\n", nr | SYSCALL_BIT,
-	       a[0], a[1], a[2], a[3], a[4], a[5], rc);
+		printf("syscall(%#lx, %#lx, %#lx, %#lx, %#lx, %#lx, %#lx)"
+		       " = %ld ENOSYS (%m)\n", nr | SYSCALL_BIT,
+		       a[0], a[1], a[2], a[3], a[4], a[5], rc);
 #else
-	printf("syscall_%#lx(%#llx, %#llx, %#llx, %#llx, %#llx, %#llx)"
-	       " = %ld (errno %d)\n", nr | SYSCALL_BIT,
-	       (unsigned long long) a[0],
-	       (unsigned long long) a[1],
-	       (unsigned long long) a[2],
-	       (unsigned long long) a[3],
-	       (unsigned long long) a[4],
-	       (unsigned long long) a[5],
-	       rc, errno);
+		printf("syscall_%#llx(%#llx, %#llx, %#llx, %#llx, %#llx, %#llx)"
+		       " = %ld (errno %d)\n",
+		       (unsigned long long) (nr | SYSCALL_BIT),
+		       (unsigned long long) a[0],
+		       (unsigned long long) a[1],
+		       (unsigned long long) a[2],
+		       (unsigned long long) a[3],
+		       (unsigned long long) a[4],
+		       (unsigned long long) a[5],
+		       rc, errno);
 #endif
+	}
 }
 
 int
 main(int argc, char *argv[])
 {
+	static bool scno_is_64bit =
+#if defined __x86_64__
+		false
+#else
+		sizeof(kernel_ulong_t) == 8
+#endif
+	;
+
 #if DEBUG_PRINT
 	if (argc < 3)
 		error_msg_and_fail("Not enough arguments. "
@@ -118,15 +135,27 @@ main(int argc, char *argv[])
 		perror_msg_and_fail("fdopen: %d", debug_out_fd);
 #endif
 
-	test_syscall(ARRAY_SIZE(syscallent));
+	test_syscall(ARRAY_SIZE(syscallent), true);
 
 #ifdef SYS_socket_subcall
-	test_syscall(SYS_socket_subcall + 1);
+	test_syscall(SYS_socket_subcall + 1, true);
 #endif
 
 #ifdef SYS_ipc_subcall
-	test_syscall(SYS_ipc_subcall + 1);
+	test_syscall(SYS_ipc_subcall + 1, true);
 #endif
+
+	/* ARM EABI shuffled syscalls. 0xf0000|0x2 is __ARM_NR_cacheflush */
+	test_syscall(0xf0002, !__arm__);
+
+	/* x32 */
+	test_syscall(0x40001000, true);
+
+	test_syscall((kernel_ulong_t) 0x100000000ULL | __NR_getpid,
+		     scno_is_64bit);
+
+	test_syscall((kernel_ulong_t) -2ULL, true);
+	test_syscall((kernel_ulong_t) -1ULL, true);
 
 	puts("+++ exited with 0 +++");
 	return 0;
