@@ -44,10 +44,6 @@ arch_get_scno(struct tcb *tcp)
 	kernel_ulong_t scno = 0;
 	unsigned int currpers;
 
-#ifndef __X32_SYSCALL_BIT
-# define __X32_SYSCALL_BIT	0x40000000
-#endif
-
 #if 1
 	/*
 	 * GETREGSET of NT_PRSTATUS tells us regset size,
@@ -65,7 +61,7 @@ arch_get_scno(struct tcb *tcp)
 	} else {
 		scno = x86_64_regs.orig_rax;
 		currpers = 0;
-		if (scno & __X32_SYSCALL_BIT) {
+		if (is_x32_enabled && (scno & __X32_SYSCALL_BIT)) {
 			/*
 			 * Syscall number -1 requires special treatment:
 			 * it might be a side effect of SECCOMP_RET_ERRNO
