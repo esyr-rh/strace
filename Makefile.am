@@ -472,6 +472,7 @@ EXTRA_DIST =				\
 	linux/arc/syscallent.h		\
 	linux/arch_defs_.h		\
 	linux/arch_kvm.c		\
+	linux/arch_peculiarities.c	\
 	linux/arch_regs.h		\
 	linux/arch_sigreturn.c		\
 	linux/arm/arch_defs_.h		\
@@ -878,6 +879,7 @@ EXTRA_DIST =				\
 	linux/userent0.h		\
 	linux/x32/arch_defs_.h		\
 	linux/x32/arch_kvm.c		\
+	linux/x32/arch_peculiarities.c	\
 	linux/x32/arch_regs.c		\
 	linux/x32/arch_regs.h		\
 	linux/x32/arch_rt_sigframe.c	\
@@ -901,6 +903,7 @@ EXTRA_DIST =				\
 	linux/x32/userent.h		\
 	linux/x86_64/arch_defs_.h	\
 	linux/x86_64/arch_kvm.c		\
+	linux/x86_64/arch_peculiarities.c	\
 	linux/x86_64/arch_regs.c	\
 	linux/x86_64/arch_regs.h	\
 	linux/x86_64/arch_rt_sigframe.c	\

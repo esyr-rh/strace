@@ -1,3 +1,11 @@
+#include <stdbool.h>
+
+#ifndef __X32_SYSCALL_BIT
+# define __X32_SYSCALL_BIT	0x40000000
+#endif
+
+bool is_x32_enabled;
+
 extern uint32_t *const i386_esp_ptr;
 extern uint64_t *const x86_64_rsp_ptr;
 

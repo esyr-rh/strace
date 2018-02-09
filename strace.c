@@ -60,6 +60,8 @@
 #include "xstring.h"
 #include "delay.h"
 
+#include "arch_peculiarities.c"
+
 /* In some libc, these aren't declared. Do it ourself: */
 extern char **environ;
 extern int optind;
@@ -1825,6 +1827,8 @@ init(int argc, char *argv[])
 				     PTRACE_O_TRACEVFORK;
 	debug_msg("ptrace_setoptions = %#x", ptrace_setoptions);
 	test_ptrace_seize();
+
+	test_arch_peculiarities();
 
 	/*
 	 * Is something weird with our stdin and/or stdout -
