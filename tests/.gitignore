@@ -105,6 +105,7 @@ getgroups32
 getpeername
 getpgrp
 getpid
+getpid-fault
 getppid
 getrandom
 getresgid

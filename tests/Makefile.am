@@ -103,6 +103,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	fork-f \
 	fsync-y \
 	getpid	\
+	getpid-fault \
 	getppid	\
 	gettid \
 	int_0x80 \
@@ -283,6 +284,7 @@ MISC_TESTS = \
 	filtering_syscall-syntax.test \
 	fflush.test \
 	get_regs.test \
+	getpid-fault.test \
 	interactive_block.test \
 	ksysent.test \
 	opipe.test \

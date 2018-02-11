@@ -1,0 +1,57 @@
+#!/bin/sh -efu
+
+# Check injection of return values into a non-failing syscall.
+
+. "${srcdir=.}/scno_tampering.sh"
+
+case "$STRACE_ARCH" in
+alpha)
+	SYSCALL=getpgrp
+	;;
+*)
+	SYSCALL=getpid
+	;;
+esac
+
+> "$LOG" || fail_ "failed to write $LOG"
+fault_args="-a9 -e trace=${SYSCALL} -e inject=${SYSCALL}:retval="
+args='../getpid-fault'
+
+# $1 - # of run
+# $2 - value
+run()
+{
+	local n rval
+	n="$1"; shift
+	rval="$1"; shift
+
+	set -- $STRACE -o "$LOG.$n" $fault_args$rval $args $rval
+	"$@" > "$EXP.$n" || {
+		rc=$?
+		if [ "$rc" -eq 77 ]; then
+			skip_ "$fault_args $args exited with code 77"
+		else
+			dump_log_and_fail_with \
+				"$* > $EXP.$n failed with code $rc"
+		fi
+	}
+	match_diff "$LOG.$n" "$EXP.$n"
+}
+
+# $1 - # of run
+# $2 - value
+
+run 0 0
+run 1 1
+run 2 2147483647 # 0x7fffffff
+
+case "$SIZEOF_KERNEL_LONG_T" in
+8)
+	run 3 2147483648 # 0x80000000
+	run 4 4294963200 # 0xfffff000
+	run 5 4294967294 # 0xfffffffe
+	run 6 4294967295 # 0xffffffff
+	run 7 4294967296 # 0x100000000
+	run 8 9223372036854775807 # 0x7fffffffffffffff
+	;;
+esac
