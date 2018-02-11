@@ -1002,6 +1002,8 @@ extern const char *const signalent0[];
 extern const struct_ioctlent ioctlent0[];
 
 extern const char *const personality_names[];
+/* Personality designators to be used for specifying personality */
+extern const char *const personality_designators[];
 
 #if SUPPORTED_PERSONALITIES > 1
 extern const struct_sysent *sysent;
