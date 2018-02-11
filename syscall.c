@@ -577,7 +577,10 @@ tamper_with_syscall_exiting(struct tcb *tcp)
 	if (!opts)
 		return 0;
 
-	if (opts->data.rval >= 0) {
+	if (!(opts->data.flags & INJECT_F_RETVAL))
+		return 0;
+
+	if (opts->data.err == 0) {
 		kernel_long_t u_rval = tcp->u_rval;
 
 		tcp->u_rval = opts->data.rval;
@@ -588,7 +591,7 @@ tamper_with_syscall_exiting(struct tcb *tcp)
 			tcp->u_error = 0;
 		}
 	} else {
-		unsigned long new_error = -opts->data.rval;
+		unsigned long new_error = opts->data.err;
 
 		if (new_error != tcp->u_error && new_error <= MAX_ERRNO_VALUE) {
 			unsigned long u_error = tcp->u_error;

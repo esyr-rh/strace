@@ -44,14 +44,18 @@ run()
 run 0 0
 run 1 1
 run 2 2147483647 # 0x7fffffff
+run 3 2147483648 # 0x80000000
+run 4 4294963200 # 0xfffff000
+run 5 4294967294 # 0xfffffffe
+run 6 4294967295 # 0xffffffff
 
 case "$SIZEOF_KERNEL_LONG_T" in
 8)
-	run 3 2147483648 # 0x80000000
-	run 4 4294963200 # 0xfffff000
-	run 5 4294967294 # 0xfffffffe
-	run 6 4294967295 # 0xffffffff
 	run 7 4294967296 # 0x100000000
 	run 8 9223372036854775807 # 0x7fffffffffffffff
+	run 9 9223372036854775808 # 0x8000000000000000
+	run 10 18446744073709547520 # 0xfffffffffffff000
+	run 11 18446744073709551614 # 0xfffffffffffffffe
+	run 12 18446744073709551615 # 0xffffffffffffffff
 	;;
 esac

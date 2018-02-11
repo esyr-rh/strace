@@ -184,7 +184,8 @@ struct inject_data {
 	/* The architecture with most _NSIG is MIPS, with 128 signals */
 	uint8_t  signo;
 	uint16_t syscall[SUPPORTED_PERSONALITIES];
-	kernel_long_t rval;
+	uint16_t err;
+	kernel_ulong_t rval;
 };
 
 struct inject_opts {
