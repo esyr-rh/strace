@@ -99,7 +99,7 @@ bit_ioctl(struct tcb *const tcp, const unsigned int ev_nr,
 					     REL_MAX, "REL_???", false);
 		case EV_ABS:
 			return decode_bitset(tcp, arg, evdev_abs,
-					     ABS_MAX, "ABS_???", false);
+					     ABS_MAX, "ABS_???", true);
 		case EV_MSC:
 			return decode_bitset(tcp, arg, evdev_misc,
 					     MSC_MAX, "MSC_???", false);
