@@ -37,7 +37,6 @@
 # include <linux/input.h>
 #endif
 
-#include "xlat/evdev_abs.h"
 #include "xlat/evdev_ev.h"
 
 static int
