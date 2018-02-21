@@ -451,18 +451,6 @@ decode_ebcdic(const char *ebcdic, char *ascii, size_t size)
 	} while (0)
 
 
-static bool
-is_filled(char *ptr, char fill, size_t size)
-{
-	while (size--)
-		if (*ptr++ != fill)
-			return false;
-
-	return true;
-}
-
-#define IS_ZERO(arr_) \
-	is_filled(arr_, '\0', sizeof(arr_) + MUST_BE_ARRAY(arr_))
 #define IS_BLANK(arr_) /* 0x40 is space in EBCDIC */ \
 	is_filled(arr_, '\x40', sizeof(arr_) + MUST_BE_ARRAY(arr_))
 
