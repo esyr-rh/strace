@@ -57,6 +57,14 @@ bpf_cmd_decoder(struct tcb *const tcp,					\
 #define BPF_CMD_ENTRY(bpf_cmd)						\
 	[bpf_cmd] = decode_ ## bpf_cmd
 
+#ifndef BPF_OBJ_NAME_LEN
+# define BPF_OBJ_NAME_LEN 16U
+#else
+# if BPF_OBJ_NAME_LEN != 16U
+#  error "Unexpected value of BPF_OBJ_NAME_LEN"
+# endif
+#endif
+
 typedef DECL_BPF_CMD_DECODER((*bpf_cmd_decoder_t));
 
 static int
@@ -201,6 +209,8 @@ DEF_BPF_CMD_DECODER(BPF_PROG_LOAD)
 		uint32_t log_level, log_size;
 		uint64_t ATTRIBUTE_ALIGNED(8) log_buf;
 		uint32_t kern_version, prog_flags;
+		char     prog_name[BPF_OBJ_NAME_LEN];
+		uint32_t prog_ifindex;
 	} attr = {};
 	const size_t attr_size =
 		offsetofend(struct bpf_prog_load, prog_ifindex);
@@ -233,6 +243,20 @@ DEF_BPF_CMD_DECODER(BPF_PROG_LOAD)
 
 	/* prog_flags field was added in Linux commit v4.12-rc2~34^2~29^2~2. */
 	PRINT_FIELD_FLAGS(", ", attr, prog_flags, bpf_prog_flags, "BPF_F_???");
+	if (LE_CLAMP(len, offsetofend(struct bpf_prog_load, prog_flags)))
+		goto bpf_prog_load_end;
+
+	/* prog_name field was added in Linux commit v4.15-rc1~84^2~605^2~4. */
+	PRINT_FIELD_CSTRING(", ", attr, prog_name);
+	if (LE_CLAMP(len, offsetofend(struct bpf_prog_load, prog_name)))
+		goto bpf_prog_load_end;
+
+	/*
+	 * prog_ifindex field was added as prog_target_ifindex in Linux commit
+	 * v4.15-rc1~84^2~127^2~13 and renamed to its current name in
+	 * v4.15-rc1~15^2~5^2~3^2~7.
+	 */
+	PRINT_FIELD_IFINDEX(", ", attr, prog_ifindex);
 
 	decode_attr_extra_data(tcp, data, size, attr_size);
 
