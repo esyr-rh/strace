@@ -201,7 +201,9 @@ DEF_BPF_CMD_DECODER(BPF_PROG_LOAD)
 		uint64_t ATTRIBUTE_ALIGNED(8) log_buf;
 		uint32_t kern_version, prog_flags;
 	} attr = {};
-	const unsigned int len = size < sizeof(attr) ? size : sizeof(attr);
+	const size_t attr_size =
+		offsetofend(struct bpf_prog_load, prog_ifindex);
+	unsigned int len = MIN(size, attr_size);
 
 	memcpy(&attr, data, len);
 
@@ -210,15 +212,30 @@ DEF_BPF_CMD_DECODER(BPF_PROG_LOAD)
 	PRINT_FIELD_U(", ", attr, insn_cnt);
 	PRINT_FIELD_X(", ", attr, insns);
 	PRINT_FIELD_STR(", ", attr, license, tcp);
+	if (LE_CLAMP(len, offsetofend(struct bpf_prog_load, license)))
+		goto bpf_prog_load_end;
+
+	/* log_* fields were added in Liunux commit v3.18-rc1~52^2~1^2~4. */
 	PRINT_FIELD_U(", ", attr, log_level);
 	PRINT_FIELD_U(", ", attr, log_size);
 	PRINT_FIELD_X(", ", attr, log_buf);
+	if (LE_CLAMP(len, offsetofend(struct bpf_prog_load, log_buf)))
+		goto bpf_prog_load_end;
+
+	/* kern_version field was added in Linux commit v4.1-rc1~84^2~50. */
 	tprintf(", kern_version=KERNEL_VERSION(%u, %u, %u)",
 		attr.kern_version >> 16,
 		(attr.kern_version >> 8) & 0xFF,
 		attr.kern_version & 0xFF);
+	if (LE_CLAMP(len, offsetofend(struct bpf_prog_load, kern_version)))
+		goto bpf_prog_load_end;
+
+	/* prog_flags field was added in Linux commit v4.12-rc2~34^2~29^2~2. */
 	PRINT_FIELD_FLAGS(", ", attr, prog_flags, bpf_prog_flags, "BPF_F_???");
-	decode_attr_extra_data(tcp, data, size, sizeof(attr));
+
+	decode_attr_extra_data(tcp, data, size, attr_size);
+
+bpf_prog_load_end:
 	tprints("}");
 
 	return RVAL_DECODED | RVAL_FD;
