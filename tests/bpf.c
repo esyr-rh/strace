@@ -366,7 +366,6 @@ print_BPF_MAP_GET_NEXT_KEY_attr(const unsigned long addr)
 
 # endif /* HAVE_UNION_BPF_ATTR_FLAGS */
 
-# ifdef HAVE_UNION_BPF_ATTR_PROG_FLAGS
 
 DEF_BPF_INIT_FIRST(BPF_PROG_LOAD, prog_type, 1)
 
@@ -396,10 +395,16 @@ init_BPF_PROG_LOAD_attr(const unsigned long eop)
 		.log_size = sizeof(log_buf),
 		.log_buf = (uintptr_t) log_buf,
 		.kern_version = 0xcafef00d,
+# ifdef HAVE_UNION_BPF_ATTR_PROG_FLAGS
 		.prog_flags = 1
+# endif /* HAVE_UNION_BPF_ATTR_PROG_FLAGS */
 	};
 	static const unsigned int offset =
+# ifdef HAVE_UNION_BPF_ATTR_PROG_FLAGS
 		offsetofend(union bpf_attr, prog_flags);
+# else
+		offsetofend(union bpf_attr, kern_version);
+# endif /* HAVE_UNION_BPF_ATTR_PROG_FLAGS */
 	const unsigned long addr = eop - offset;
 
 	memcpy((void *) addr, &attr, offset);
@@ -412,12 +417,13 @@ print_BPF_PROG_LOAD_attr(const unsigned long addr)
 	printf("prog_type=BPF_PROG_TYPE_SOCKET_FILTER, insn_cnt=%u, insns=%p"
 	       ", license=\"GPL\", log_level=42, log_size=4096, log_buf=%p"
 	       ", kern_version=KERNEL_VERSION(51966, 240, 13)"
-	       ", prog_flags=BPF_F_STRICT_ALIGNMENT",
-	       (unsigned int) ARRAY_SIZE(insns), insns,
+# ifdef HAVE_UNION_BPF_ATTR_PROG_FLAGS
+	       ", prog_flags=BPF_F_STRICT_ALIGNMENT"
+# endif /* HAVE_UNION_BPF_ATTR_PROG_FLAGS */
+	       , (unsigned int) ARRAY_SIZE(insns), insns,
 	       log_buf);
 }
 
-# endif /* HAVE_UNION_BPF_ATTR_PROG_FLAGS */
 
 /*
  * bpf() syscall and its first six commands were introduced in Linux kernel
@@ -709,9 +715,7 @@ main(void)
 	TEST_BPF(BPF_MAP_GET_NEXT_KEY);
 # endif
 
-# ifdef HAVE_UNION_BPF_ATTR_PROG_FLAGS
 	TEST_BPF(BPF_PROG_LOAD);
-# endif
 
 # ifdef HAVE_UNION_BPF_ATTR_BPF_FD
 	TEST_BPF(BPF_OBJ_PIN);

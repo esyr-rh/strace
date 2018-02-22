@@ -32,6 +32,7 @@
 #ifdef HAVE_LINUX_BPF_H
 # include <linux/bpf.h>
 #endif
+#include <linux/filter.h>
 
 #include "xlat/bpf_commands.h"
 #include "xlat/bpf_file_mode_flags.h"
@@ -42,6 +43,7 @@
 #include "xlat/bpf_map_update_elem_flags.h"
 #include "xlat/bpf_attach_type.h"
 #include "xlat/bpf_attach_flags.h"
+#include "xlat/ebpf_regs.h"
 
 #define DECL_BPF_CMD_DECODER(bpf_cmd_decoder)				\
 int									\
@@ -93,6 +95,61 @@ decode_attr_extra_data(struct tcb *const tcp,
 	}
 
 	return 0;
+}
+
+struct ebpf_insn {
+	uint8_t code;
+	uint8_t dst_reg:4;
+	uint8_t src_reg:4;
+	int16_t off;
+	int32_t imm;
+};
+
+struct ebpf_insns_data {
+	unsigned int count;
+};
+
+static bool
+print_ebpf_insn(struct tcb * const tcp, void * const elem_buf,
+		const size_t elem_size, void * const data)
+{
+	struct ebpf_insns_data *eid = data;
+	struct ebpf_insn *insn = elem_buf;
+
+	if (eid->count++ >= BPF_MAXINSNS) {
+		tprints("...");
+		return false;
+	}
+
+	tprints("{code=");
+	print_bpf_filter_code(insn->code, true);
+
+	/* We can't use PRINT_FIELD_XVAL on bit fields */
+	tprints(", dst_reg=");
+	printxval(ebpf_regs, insn->dst_reg, "BPF_REG_???");
+	tprints(", src_reg=");
+	printxval(ebpf_regs, insn->src_reg, "BPF_REG_???");
+
+	PRINT_FIELD_D(", ", *insn, off);
+	PRINT_FIELD_X(", ", *insn, imm);
+	tprints("}");
+
+	return true;
+}
+
+void
+print_ebpf_prog(struct tcb *const tcp, const kernel_ulong_t addr,
+		const uint32_t len)
+{
+	if (abbrev(tcp)) {
+		printaddr(addr);
+	} else {
+		struct ebpf_insns_data eid = {};
+		struct ebpf_insn insn;
+
+		print_array(tcp, addr, len, &insn, sizeof(insn),
+			    umoven_or_printaddr, print_ebpf_insn, &eid);
+	}
 }
 
 DEF_BPF_CMD_DECODER(BPF_MAP_CREATE)
@@ -221,7 +278,8 @@ DEF_BPF_CMD_DECODER(BPF_PROG_LOAD)
 	PRINT_FIELD_XVAL("{", attr, prog_type, bpf_prog_types,
 			 "BPF_PROG_TYPE_???");
 	PRINT_FIELD_U(", ", attr, insn_cnt);
-	PRINT_FIELD_X(", ", attr, insns);
+	tprints(", insns=");
+	print_ebpf_prog(tcp, attr.insns, attr.insn_cnt);
 	PRINT_FIELD_STR(", ", attr, license, tcp);
 	if (LE_CLAMP(len, offsetofend(struct bpf_prog_load, license)))
 		goto bpf_prog_load_end;
