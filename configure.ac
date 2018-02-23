@@ -76,7 +76,32 @@ cc_flags_mx32=-mx32
 case "$host_cpu" in
 aarch64*)
 	arch=aarch64
+	AC_MSG_RESULT($arch)
+
 	arch_m32=arm
+	cc_flags_m32=
+
+	# So far, only aarch64 needs a separate compiler for its compat
+	# personality (which is AArch32, that is more or less ARMv7 EABI)
+
+	# Some heuristics regarding possible compiler name:
+	#   Debian:  arm-linux-gnueabi{,hf}-gcc
+	#   SuSE:    arm7{,hl}-linux-gnueabi-gcc
+	#   Red Hat: arm-redhat-linux-gnu-gcc
+	#   Fedora:  arm-linux-gnu-gcc
+	#   ALT:     armh-alt-linux-gnueabi-gcc
+	m4_foreach([triplet1], [arm, arm7, arm7hl, armh], dnl
+		[m4_foreach([triplet2], [, $host_vendor-], dnl
+		[m4_foreach([triplet3], [gnu, gnueabi, gnueabihf], dnl
+		[m4_foreach([triplet_cc], [gcc, cc], dnl
+		[m4_append([arm_compat_compilers], dnl
+		triplet1[-]triplet2[linux-]triplet3[-]triplet_cc)])])])])
+
+	AC_CHECK_PROGS(CC_FOR_M32, arm_compat_compilers)
+	: ${CPP_FOR_M32=$CC_FOR_M32 -E}
+	: ${CFLAGS_FOR_M32=-std=gnu99}
+	: ${CPPFLAGS_FOR_M32=}
+
 	AC_DEFINE([AARCH64], 1, [Define for the AArch64 architecture.])
 	;;
 alpha*)
@@ -203,7 +228,10 @@ xtensa*)
 	AC_MSG_ERROR([architecture $host_cpu is not supported by strace])
 	;;
 esac
-AC_MSG_RESULT($arch)
+
+# Result for aarch64 is printed early as the CC for m32 detection
+# is performed afterwards
+AS_IF([test x$arch != xaarch64], [AC_MSG_RESULT($arch)])
 
 arch_native=$arch
 
