@@ -81,6 +81,22 @@ AC_DEFUN([st_MPERS],[
 
 pushdef([mpers_name], [$1])
 pushdef([MPERS_NAME], translit([$1], [a-z], [A-Z]))
+
+pushdef([EXEEXT], MPERS_NAME[_EXEEXT])dnl
+pushdef([OBJEXT], MPERS_NAME[_OBJEXT])dnl
+pushdef([LDFLAGS], [LDFLAGS_FOR_]MPERS_NAME)dnl
+pushdef([WARN_CFLAGS], [WARN_CFLAGS_FOR_]MPERS_NAME)dnl
+
+st_SAVE_VAR([CC])
+st_SAVE_VAR([CPP])
+st_SAVE_VAR([CFLAGS])
+st_SAVE_VAR([CPPFLAGS])
+
+CC=[$CC_FOR_]MPERS_NAME
+CPP=[$CPP_FOR_]MPERS_NAME
+CFLAGS=[$CFLAGS_FOR_]MPERS_NAME
+CPPFLAGS=[$CPPFLAGS_FOR_]MPERS_NAME
+
 pushdef([HAVE_MPERS], [HAVE_]MPERS_NAME[_MPERS])
 pushdef([HAVE_RUNTIME], [HAVE_]MPERS_NAME[_RUNTIME])
 pushdef([MPERS_CFLAGS], [$cc_flags_$1])
@@ -106,7 +122,7 @@ case "$arch" in
 	popdef([gnu_stubs])
 	saved_CFLAGS="$CFLAGS"
 	CFLAGS="$CFLAGS MPERS_CFLAGS $IFLAG"
-	AC_CACHE_CHECK([for mpers_name personality compile support], [st_cv_cc],
+	AC_CACHE_CHECK([for mpers_name personality compile support (using $CC $CFLAGS)], [st_cv_cc],
 		[AC_COMPILE_IFELSE([AC_LANG_SOURCE([[#include <stdint.h>
 						     int main(){return 0;}]])],
 				   [st_cv_cc=yes],
@@ -122,8 +138,8 @@ case "$arch" in
 		AC_CACHE_CHECK([whether mpers.sh mpers_name MPERS_CFLAGS works],
 			[st_cv_mpers],
 			[if READELF="$READELF" \
-			    CC="$CC" CPP="$CPP" CPPFLAGS="$CPPFLAGS" \
-			    $srcdir/mpers_test.sh [$1] MPERS_CFLAGS; then
+			    CC="$CC" CPP="$CPP" [CPPFLAGS]="$CPPFLAGS" \
+			    $srcdir/mpers_test.sh [$1] "MPERS_CFLAGS"; then
 				st_cv_mpers=yes
 			 else
 				st_cv_mpers=no
@@ -191,4 +207,13 @@ popdef([HAVE_MPERS])
 popdef([MPERS_NAME])
 popdef([mpers_name])
 
+popdef([EXEEXT])dnl
+popdef([OBJEXT])dnl
+popdef([LDFLAGS])dnl
+popdef([WARN_CFLAGS])dnl
+
+st_RESTORE_VAR([CC])
+st_RESTORE_VAR([CPP])
+st_RESTORE_VAR([CFLAGS])
+st_RESTORE_VAR([CPPFLAGS])
 ])
