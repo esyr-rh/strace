@@ -38,45 +38,51 @@
 
 AU_ALIAS([AC_PROG_CC_FOR_BUILD], [AX_PROG_CC_FOR_BUILD])
 AC_DEFUN([AX_PROG_CC_FOR_BUILD], [dnl
+AX_PROG_CC_FOR(build,$@)dnl
+])
+
+AC_DEFUN([AX_PROG_CC_FOR], [dnl
 AC_REQUIRE([AC_PROG_CC])dnl
 AC_REQUIRE([AC_PROG_CPP])dnl
 AC_REQUIRE([AC_EXEEXT])dnl
 AC_REQUIRE([AC_CANONICAL_HOST])dnl
 
+m4_define([forupper], m4_toupper([$1]))
+
 dnl Use the standard macros, but make them use other variable names
 dnl
-pushdef([ac_cv_prog_CPP], ac_cv_build_prog_CPP)dnl
-pushdef([ac_cv_prog_gcc], ac_cv_build_prog_gcc)dnl
-pushdef([ac_cv_prog_cc_works], ac_cv_build_prog_cc_works)dnl
-pushdef([ac_cv_prog_cc_cross], ac_cv_build_prog_cc_cross)dnl
-pushdef([ac_cv_prog_cc_g], ac_cv_build_prog_cc_g)dnl
-pushdef([ac_cv_prog_cc_stdc], ac_cv_build_prog_cc_stdc)dnl
-pushdef([ac_cv_prog_cc_c11], ac_cv_build_prog_cc_c11)dnl
-pushdef([ac_cv_prog_cc_c99], ac_cv_build_prog_cc_c99)dnl
-pushdef([ac_cv_prog_cc_c89], ac_cv_build_prog_cc_c89)dnl
-pushdef([ac_cv_exeext], ac_cv_build_exeext)dnl
-pushdef([ac_cv_objext], ac_cv_build_objext)dnl
-pushdef([ac_exeext], ac_build_exeext)dnl
-pushdef([ac_objext], ac_build_objext)dnl
-pushdef([CC], CC_FOR_BUILD)dnl
-pushdef([CPP], CPP_FOR_BUILD)dnl
-pushdef([CFLAGS], CFLAGS_FOR_BUILD)dnl
-pushdef([CPPFLAGS], CPPFLAGS_FOR_BUILD)dnl
-pushdef([LDFLAGS], LDFLAGS_FOR_BUILD)dnl
-pushdef([WARN_CFLAGS], WARN_CFLAGS_FOR_BUILD)dnl
-pushdef([host], build)dnl
-pushdef([host_alias], build_alias)dnl
-pushdef([host_cpu], build_cpu)dnl
-pushdef([host_vendor], build_vendor)dnl
-pushdef([host_os], build_os)dnl
-pushdef([ac_cv_host], ac_cv_build)dnl
-pushdef([ac_cv_host_alias], ac_cv_build_alias)dnl
-pushdef([ac_cv_host_cpu], ac_cv_build_cpu)dnl
-pushdef([ac_cv_host_vendor], ac_cv_build_vendor)dnl
-pushdef([ac_cv_host_os], ac_cv_build_os)dnl
-pushdef([am_cv_prog_cc_c_o], am_cv_build_prog_cc_c_o)dnl
-pushdef([am_cv_CC_dependencies_compiler_type], am_cv_build_CC_dependencies_compiler_type)dnl
-pushdef([gl_unknown_warnings_are_errors], gl_build_unknown_warnings_are_errors)dnl
+pushdef([ac_cv_prog_CPP], ac_cv_$1_prog_CPP)dnl
+pushdef([ac_cv_prog_gcc], ac_cv_$1_prog_gcc)dnl
+pushdef([ac_cv_prog_cc_works], ac_cv_$1_prog_cc_works)dnl
+pushdef([ac_cv_prog_cc_cross], ac_cv_$1_prog_cc_cross)dnl
+pushdef([ac_cv_prog_cc_g], ac_cv_$1_prog_cc_g)dnl
+pushdef([ac_cv_prog_cc_stdc], ac_cv_$1_prog_cc_stdc)dnl
+pushdef([ac_cv_prog_cc_c11], ac_cv_$1_prog_cc_c11)dnl
+pushdef([ac_cv_prog_cc_c99], ac_cv_$1_prog_cc_c99)dnl
+pushdef([ac_cv_prog_cc_c89], ac_cv_$1_prog_cc_c89)dnl
+pushdef([ac_cv_exeext], ac_cv_$1_exeext)dnl
+pushdef([ac_cv_objext], ac_cv_$1_objext)dnl
+pushdef([ac_exeext], ac_$1_exeext)dnl
+pushdef([ac_objext], ac_$1_objext)dnl
+pushdef([CC], [CC_FOR_]forupper)dnl
+pushdef([CPP], [CPP_FOR_]forupper)dnl
+pushdef([CFLAGS], [CFLAGS_FOR_]forupper)dnl
+pushdef([CPPFLAGS], [CPPFLAGS_FOR_]forupper)dnl
+pushdef([LDFLAGS], [LDFLAGS_FOR_]forupper)dnl
+pushdef([WARN_CFLAGS], [WARN_CFLAGS_FOR_]forupper)dnl
+pushdef([host], $1)dnl
+pushdef([host_alias], $1_alias)dnl
+pushdef([host_cpu], $1_cpu)dnl
+pushdef([host_vendor], $1_vendor)dnl
+pushdef([host_os], $1_os)dnl
+pushdef([ac_cv_host], ac_cv_$1)dnl
+pushdef([ac_cv_host_alias], ac_cv_$1_alias)dnl
+pushdef([ac_cv_host_cpu], ac_cv_$1_cpu)dnl
+pushdef([ac_cv_host_vendor], ac_cv_$1_vendor)dnl
+pushdef([ac_cv_host_os], ac_cv_$1_os)dnl
+pushdef([am_cv_prog_cc_c_o], am_cv_$1_prog_cc_c_o)dnl
+pushdef([am_cv_CC_dependencies_compiler_type], am_cv_$1_CC_dependencies_compiler_type)dnl
+pushdef([gl_unknown_warnings_are_errors], gl_$1_unknown_warnings_are_errors)dnl
 
 st_SAVE_VAR([ac_c_decl_warn_flag])
 st_SAVE_VAR([ac_c_preproc_warn_flag])
@@ -91,7 +97,7 @@ st_SAVE_VAR([ac_tool_prefix])
 st_SAVE_VAR([cross_compiling])
 cross_compiling=no
 
-AC_MSG_NOTICE([looking for a C compiler that generates native executables])
+AC_MSG_NOTICE([looking for a C compiler that generates executables for ]$1)
 AC_PROG_CC
 AC_PROG_CPP
 AC_EXEEXT
@@ -147,12 +153,12 @@ popdef([ac_cv_prog_CPP])dnl
 
 dnl Finally, set Makefile variables
 dnl
-BUILD_EXEEXT=$ac_build_exeext
-BUILD_OBJEXT=$ac_build_objext
-AC_SUBST(BUILD_EXEEXT)dnl
-AC_SUBST(BUILD_OBJEXT)dnl
-AC_SUBST([CFLAGS_FOR_BUILD])dnl
-AC_SUBST([CPPFLAGS_FOR_BUILD])dnl
-AC_SUBST([LDFLAGS_FOR_BUILD])dnl
-AC_SUBST([WARN_CFLAGS_FOR_BUILD])dnl
+forupper[_EXEEXT]=$ac_$1_exeext
+forupper[_OBJEXT]=$ac_$1_objext
+AC_SUBST(forupper[_EXEEXT])dnl
+AC_SUBST(forupper[_OBJEXT])dnl
+AC_SUBST([CFLAGS_FOR_]forupper)dnl
+AC_SUBST([CPPFLAGS_FOR_]forupper)dnl
+AC_SUBST([LDFLAGS_FOR_]forupper)dnl
+AC_SUBST([WARN_CFLAGS_FOR_]forupper)dnl
 ])
