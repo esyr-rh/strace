@@ -34,6 +34,7 @@
 #endif
 
 #include "xlat/bpf_commands.h"
+#include "xlat/bpf_file_mode_flags.h"
 #include "xlat/bpf_map_types.h"
 #include "xlat/bpf_map_flags.h"
 #include "xlat/bpf_prog_types.h"
@@ -246,16 +247,26 @@ DEF_BPF_CMD_DECODER(BPF_OBJ_PIN)
 	struct bpf_obj {
 		uint64_t ATTRIBUTE_ALIGNED(8) pathname;
 		uint32_t bpf_fd;
+		uint32_t file_flags;
 	} attr = {};
 	const size_t attr_size =
-		offsetofend(struct bpf_obj, bpf_fd);
-	const unsigned int len = size < attr_size ? size : attr_size;
+		offsetofend(struct bpf_obj, file_flags);
+	unsigned int len = size < attr_size ? size : attr_size;
 
 	memcpy(&attr, data, len);
 
 	PRINT_FIELD_PATH("{", attr, pathname, tcp);
 	PRINT_FIELD_FD(", ", attr, bpf_fd, tcp);
+	if (LE_CLAMP(len, offsetofend(struct bpf_obj, bpf_fd)))
+		goto bpf_obj_pin_end;
+
+	/* file_flags field was added in Linux v4.15-rc1~84^2~384^2~4 */
+	PRINT_FIELD_FLAGS(", ", attr, file_flags, bpf_file_mode_flags,
+			  "BPF_F_???");
+
 	decode_attr_extra_data(tcp, data, size, attr_size);
+
+bpf_obj_pin_end:
 	tprints("}");
 
 	return RVAL_DECODED | RVAL_FD;
@@ -328,16 +339,28 @@ DEF_BPF_CMD_DECODER(BPF_PROG_TEST_RUN)
 
 DEF_BPF_CMD_DECODER(BPF_PROG_GET_NEXT_ID)
 {
-	struct {
+	struct bpf_get_id {
 		uint32_t start_id, next_id;
+		uint32_t open_flags;
 	} attr = {};
-	const unsigned int len = size < sizeof(attr) ? size : sizeof(attr);
+	const size_t attr_size =
+		offsetofend(struct bpf_get_id, open_flags);
+	unsigned int len = MIN(size, attr_size);
 
 	memcpy(&attr, data, len);
 
 	PRINT_FIELD_U("{", attr, start_id);
 	PRINT_FIELD_U(", ", attr, next_id);
-	decode_attr_extra_data(tcp, data, size, sizeof(attr));
+	if (LE_CLAMP(len, offsetofend(struct bpf_get_id, next_id)))
+		goto bpf_prog_get_next_id_end;
+
+	/* open_flags field has been added in Linux v4.15-rc1~84^2~384^2~4 */
+	PRINT_FIELD_FLAGS(", ", attr, open_flags, bpf_file_mode_flags,
+			  "BPF_F_???");
+
+	decode_attr_extra_data(tcp, data, size, attr_size);
+
+bpf_prog_get_next_id_end:
 	tprints("}");
 
 	return RVAL_DECODED;
@@ -347,16 +370,28 @@ DEF_BPF_CMD_DECODER(BPF_PROG_GET_NEXT_ID)
 
 DEF_BPF_CMD_DECODER(BPF_PROG_GET_FD_BY_ID)
 {
-	struct {
+	struct bpf_get_id {
 		uint32_t prog_id, next_id;
+		uint32_t open_flags;
 	} attr = {};
-	const unsigned int len = size < sizeof(attr) ? size : sizeof(attr);
+	const size_t attr_size =
+		offsetofend(struct bpf_get_id, open_flags);
+	unsigned int len = MIN(size, attr_size);
 
 	memcpy(&attr, data, len);
 
 	PRINT_FIELD_U("{", attr, prog_id);
 	PRINT_FIELD_U(", ", attr, next_id);
-	decode_attr_extra_data(tcp, data, size, sizeof(attr));
+	if (LE_CLAMP(len, offsetofend(struct bpf_get_id, next_id)))
+		goto bpf_prog_get_fd_by_id_end;
+
+	/* open_flags field has been added in Linux v4.15-rc1~84^2~384^2~4 */
+	PRINT_FIELD_FLAGS(", ", attr, open_flags, bpf_file_mode_flags,
+			  "BPF_F_???");
+
+	decode_attr_extra_data(tcp, data, size, attr_size);
+
+bpf_prog_get_fd_by_id_end:
 	tprints("}");
 
 	return RVAL_DECODED;
@@ -364,16 +399,28 @@ DEF_BPF_CMD_DECODER(BPF_PROG_GET_FD_BY_ID)
 
 DEF_BPF_CMD_DECODER(BPF_MAP_GET_FD_BY_ID)
 {
-	struct {
+	struct bpf_get_id {
 		uint32_t map_id, next_id;
+		uint32_t open_flags;
 	} attr = {};
-	const unsigned int len = size < sizeof(attr) ? size : sizeof(attr);
+	const size_t attr_size =
+		offsetofend(struct bpf_get_id, open_flags);
+	unsigned int len = MIN(size, attr_size);
 
 	memcpy(&attr, data, len);
 
 	PRINT_FIELD_U("{", attr, map_id);
 	PRINT_FIELD_U(", ", attr, next_id);
-	decode_attr_extra_data(tcp, data, size, sizeof(attr));
+	if (LE_CLAMP(len, offsetofend(struct bpf_get_id, next_id)))
+		goto bpf_map_get_fd_by_id_end;
+
+	/* open_flags field has been added in Linux v4.15-rc1~84^2~384^2~4 */
+	PRINT_FIELD_FLAGS(", ", attr, open_flags, bpf_file_mode_flags,
+			  "BPF_F_???");
+
+	decode_attr_extra_data(tcp, data, size, attr_size);
+
+bpf_map_get_fd_by_id_end:
 	tprints("}");
 
 	return RVAL_DECODED;
