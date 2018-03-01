@@ -43,14 +43,22 @@
 #include "xlat/bpf_map_update_elem_flags.h"
 #include "xlat/bpf_attach_type.h"
 #include "xlat/bpf_attach_flags.h"
+#include "xlat/bpf_query_flags.h"
 #include "xlat/ebpf_regs.h"
+
+/** Storage for all the data that is needed to be stored on entering. */
+struct bpf_priv_data {
+	bool     bpf_prog_query_stored;
+	uint32_t bpf_prog_query_prog_cnt;
+};
 
 #define DECL_BPF_CMD_DECODER(bpf_cmd_decoder)				\
 int									\
 bpf_cmd_decoder(struct tcb *const tcp,					\
 		const kernel_ulong_t addr,				\
 		const unsigned int size,				\
-		void *const data)					\
+		void *const data,					\
+		struct bpf_priv_data *priv)				\
 /* End of DECL_BPF_CMD_DECODER definition. */
 
 #define DEF_BPF_CMD_DECODER(bpf_cmd)					\
@@ -528,6 +536,60 @@ DEF_BPF_CMD_DECODER(BPF_OBJ_GET_INFO_BY_FD)
 	return RVAL_DECODED | RVAL_FD;
 }
 
+DEF_BPF_CMD_DECODER(BPF_PROG_QUERY)
+{
+	struct bpf_prog_query {
+		uint32_t target_fd;
+		uint32_t attach_type;
+		uint32_t query_flags;
+		uint32_t attach_flags;
+		uint64_t ATTRIBUTE_ALIGNED(8) prog_ids;
+		uint32_t prog_cnt;
+	} attr = {};
+	const size_t attr_size =
+		offsetofend(struct bpf_prog_query, prog_cnt);
+	unsigned int len = MIN(size, attr_size);
+	uint64_t prog_id_buf;
+
+	memcpy(&attr, data, len);
+
+	if (entering(tcp)) {
+		PRINT_FIELD_FD("{query={", attr, target_fd, tcp);
+		PRINT_FIELD_XVAL(", ", attr, attach_type, bpf_attach_type,
+				 "BPF_???");
+		PRINT_FIELD_FLAGS(", ", attr, query_flags, bpf_query_flags,
+				  "BPF_F_QUERY_???");
+		PRINT_FIELD_FLAGS(", ", attr, attach_flags, bpf_attach_flags,
+				  "BPF_F_???");
+
+		tprints(", prog_ids=");
+
+		if (!priv)
+			priv = xcalloc(1, sizeof(*priv));
+
+		priv->bpf_prog_query_stored = true;
+		priv->bpf_prog_query_prog_cnt = attr.prog_cnt;
+
+		set_tcb_priv_data(tcp, priv, free);
+
+		return 0;
+	}
+
+	print_array(tcp, attr.prog_ids, attr.prog_cnt, &prog_id_buf,
+		    sizeof(prog_id_buf), umoven, print_uint64_array_member, 0);
+
+	tprints(", prog_cnt=");
+	if (priv && priv->bpf_prog_query_stored
+	    && priv->bpf_prog_query_prog_cnt != attr.prog_cnt)
+		tprintf("%" PRIu32 " => ", priv->bpf_prog_query_prog_cnt);
+	tprintf("%" PRIu32, attr.prog_cnt);
+	tprints("}");
+	decode_attr_extra_data(tcp, data, size, attr_size);
+	tprints("}");
+
+	return 0;
+}
+
 SYS_FUNC(bpf)
 {
 	static const bpf_cmd_decoder_t bpf_cmd_decoders[] = {
@@ -547,6 +609,7 @@ SYS_FUNC(bpf)
 		BPF_CMD_ENTRY(BPF_PROG_GET_FD_BY_ID),
 		BPF_CMD_ENTRY(BPF_MAP_GET_FD_BY_ID),
 		BPF_CMD_ENTRY(BPF_OBJ_GET_INFO_BY_FD),
+		BPF_CMD_ENTRY(BPF_PROG_QUERY),
 	};
 
 	const unsigned int cmd = tcp->u_arg[0];
@@ -572,13 +635,17 @@ SYS_FUNC(bpf)
 		    && bpf_cmd_decoders[cmd]) {
 			rc = umoven_or_printaddr(tcp, addr, size, buf)
 			     ? RVAL_DECODED
-			     : bpf_cmd_decoders[cmd](tcp, addr, size, buf);
+			     : bpf_cmd_decoders[cmd](tcp, addr, size, buf,
+						     NULL);
 		} else {
 			printaddr(addr);
 			rc = RVAL_DECODED;
 		}
 	} else {
-		rc = bpf_cmd_decoders[cmd](tcp, addr, size, NULL) | RVAL_DECODED;
+		struct bpf_priv_data *priv = get_tcb_priv_data(tcp);
+
+		rc = bpf_cmd_decoders[cmd](tcp, addr, size, NULL, priv)
+			| RVAL_DECODED;
 	}
 
 	if (rc & RVAL_DECODED)
