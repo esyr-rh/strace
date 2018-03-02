@@ -45,6 +45,7 @@
 #include "xlat/bpf_attach_flags.h"
 #include "xlat/bpf_query_flags.h"
 #include "xlat/ebpf_regs.h"
+#include "xlat/numa_node.h"
 
 /** Storage for all the data that is needed to be stored on entering. */
 struct bpf_priv_data {
@@ -178,7 +179,7 @@ DEF_BPF_CMD_DECODER(BPF_MAP_CREATE)
 	PRINT_FIELD_FLAGS(", ", attr, map_flags, bpf_map_flags, "BPF_F_???");
 	PRINT_FIELD_FD(", ", attr, inner_map_fd, tcp);
 	if (attr.map_flags & BPF_F_NUMA_NODE)
-		PRINT_FIELD_U(", ", attr, numa_node);
+		PRINT_FIELD_XVAL(", ", attr, numa_node, numa_node, NULL);
 	decode_attr_extra_data(tcp, data, size, sizeof(attr));
 	tprints("}");
 
