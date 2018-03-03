@@ -93,12 +93,14 @@ decode_attr_extra_data(struct tcb *const tcp,
 	unsigned int i;
 	for (i = 0; i < size; ++i) {
 		if (data[i]) {
-			tprints(", ");
-			if (abbrev(tcp))
-				tprints("...");
-			else
+			if (abbrev(tcp)) {
+				tprints(", ...");
+			} else {
+				tprintf(", /* bytes %zu..%zu */ ",
+					attr_size, attr_size + size - 1);
 				print_quoted_string(data, size,
 						    QUOTE_FORCE_HEX);
+			}
 			return RVAL_DECODED;
 		}
 	}
