@@ -46,6 +46,27 @@
 #endif
 #define CLAMP(val, min, max)	MIN(MAX(min, val), max)
 
+/**
+ * Clamps variable a to the value of b, if the former is greater than
+ * the latter, returns the result of the comparison.
+ */
+#define GT_CLAMP_ASSIGN(a, b)	(((a) > (b)) ? (a = (b)), true : false)
+/**
+ * Clamps variable a to the value of b, if the former is less than
+ * the latter, returns the result of the comparison.
+ */
+#define LT_CLAMP_ASSIGN(a, b)	(((a) < (b)) ? (a = (b)), true : false)
+/**
+ * Clamps variable a to the value of b, if the former is greater or equal than
+ * the latter, returns the result of the comparison.
+ */
+#define GE_CLAMP_ASSIGN(a, b)	(((a) => (b)) ? (a = (b)), true : false)
+/**
+ * Clamps variable a to the value of b, if the former is less or equal than
+ * the latter, returns the result of the comparison.
+ */
+#define LE_CLAMP_ASSIGN(a, b)	(((a) <= (b)) ? (a = (b)), true : false)
+
 #ifndef offsetofend
 # define offsetofend(type_, member_)	\
 	(offsetof(type_, member_) + sizeof(((type_ *)0)->member_))
