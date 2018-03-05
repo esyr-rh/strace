@@ -177,6 +177,8 @@ DEF_BPF_CMD_DECODER(BPF_MAP_CREATE)
 	struct bpf_map_desc {
 		uint32_t map_type, key_size, value_size, max_entries,
 			 map_flags, inner_map_fd, numa_node;
+		char     map_name[BPF_OBJ_NAME_LEN];
+		uint32_t map_ifindex;
 	} attr = {};
 	const size_t attr_size =
 		offsetofend(struct bpf_map_desc, map_ifindex);
@@ -208,6 +210,19 @@ DEF_BPF_CMD_DECODER(BPF_MAP_CREATE)
 	/* numa_node field was added in Linux commit v4.14-rc1~130^2~196^2~1. */
 	if (attr.map_flags & BPF_F_NUMA_NODE)
 		PRINT_FIELD_XVAL(", ", attr, numa_node, numa_node, NULL);
+	if (LE_CLAMP(len, offsetofend(struct bpf_map_desc, numa_node)))
+		goto bpf_map_create_end;
+
+	/* map_name field was added in Linux commit v4.15-rc1~84^2~605^2~3. */
+	PRINT_FIELD_CSTRING(", ", attr, map_name);
+	if (LE_CLAMP(len, offsetofend(struct bpf_map_desc, map_name)))
+		goto bpf_map_create_end;
+
+	/*
+	 * map_ifindex field was added in Linux commit
+	 * v4.16-rc1~123^2~145^2~5^2~8.
+	 */
+	PRINT_FIELD_IFINDEX(", ", attr, map_ifindex);
 
 	decode_attr_extra_data(tcp, data, size, attr_size);
 
