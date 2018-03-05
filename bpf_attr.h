@@ -36,6 +36,14 @@
 # endif
 #endif
 
+#ifndef BPF_TAG_SIZE
+# define BPF_TAG_SIZE 8
+#else
+# if BPF_TAG_SIZE != 8
+#  error "Unexpected value of BPF_TAG_SIZE"
+# endif
+#endif
+
 struct BPF_MAP_CREATE_struct {
 	uint32_t map_type;
 	uint32_t key_size;
