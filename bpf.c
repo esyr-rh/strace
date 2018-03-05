@@ -174,11 +174,13 @@ print_ebpf_prog(struct tcb *const tcp, const kernel_ulong_t addr,
 
 DEF_BPF_CMD_DECODER(BPF_MAP_CREATE)
 {
-	struct {
+	struct bpf_map_desc {
 		uint32_t map_type, key_size, value_size, max_entries,
 			 map_flags, inner_map_fd, numa_node;
 	} attr = {};
-	const unsigned int len = size < sizeof(attr) ? size : sizeof(attr);
+	const size_t attr_size =
+		offsetofend(struct bpf_map_desc, map_ifindex);
+	unsigned int len = MIN(size, attr_size);
 
 	memcpy(&attr, data, len);
 
@@ -187,11 +189,29 @@ DEF_BPF_CMD_DECODER(BPF_MAP_CREATE)
 	PRINT_FIELD_U(", ", attr, key_size);
 	PRINT_FIELD_U(", ", attr, value_size);
 	PRINT_FIELD_U(", ", attr, max_entries);
+	if (LE_CLAMP(len, offsetofend(struct bpf_map_desc, max_entries)))
+		goto bpf_map_create_end;
+
+	/* map_flags field was added in Linux commit v4.6-rc1~91^2~108^2~6. */
 	PRINT_FIELD_FLAGS(", ", attr, map_flags, bpf_map_flags, "BPF_F_???");
+	if (LE_CLAMP(len, offsetofend(struct bpf_map_desc, map_flags)))
+		goto bpf_map_create_end;
+
+	/*
+	 * inner_map_fd field was added in Linux commit
+	 * v4.12-rc1~64^3~373^2~2.
+	 */
 	PRINT_FIELD_FD(", ", attr, inner_map_fd, tcp);
+	if (LE_CLAMP(len, offsetofend(struct bpf_map_desc, inner_map_fd)))
+		goto bpf_map_create_end;
+
+	/* numa_node field was added in Linux commit v4.14-rc1~130^2~196^2~1. */
 	if (attr.map_flags & BPF_F_NUMA_NODE)
 		PRINT_FIELD_XVAL(", ", attr, numa_node, numa_node, NULL);
-	decode_attr_extra_data(tcp, data, size, sizeof(attr));
+
+	decode_attr_extra_data(tcp, data, size, attr_size);
+
+bpf_map_create_end:
 	tprints("}");
 
 	return RVAL_DECODED | RVAL_FD;
