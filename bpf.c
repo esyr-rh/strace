@@ -238,15 +238,16 @@ DEF_BPF_CMD_DECODER(BPF_MAP_LOOKUP_ELEM)
 		uint32_t map_fd;
 		uint64_t ATTRIBUTE_ALIGNED(8) key, value;
 	} attr = {};
-
-	const unsigned int len = size < sizeof(attr) ? size : sizeof(attr);
+	const size_t attr_size =
+		offsetofend(struct bpf_io_elem_struct, value);
+	unsigned int len = MIN(size, attr_size);
 
 	memcpy(&attr, data, len);
 
 	PRINT_FIELD_FD("{", attr, map_fd, tcp);
 	PRINT_FIELD_X(", ", attr, key);
 	PRINT_FIELD_X(", ", attr, value);
-	decode_attr_extra_data(tcp, data, size, sizeof(attr));
+	decode_attr_extra_data(tcp, data, size, attr_size);
 	tprints("}");
 
 	return RVAL_DECODED;
@@ -254,13 +255,15 @@ DEF_BPF_CMD_DECODER(BPF_MAP_LOOKUP_ELEM)
 
 DEF_BPF_CMD_DECODER(BPF_MAP_UPDATE_ELEM)
 {
-	struct {
+	struct bpf_update_elem {
 		uint32_t map_fd;
 		uint64_t ATTRIBUTE_ALIGNED(8) key;
 		uint64_t ATTRIBUTE_ALIGNED(8) value;
 		uint64_t flags;
 	} attr = {};
-	const unsigned int len = size < sizeof(attr) ? size : sizeof(attr);
+	const size_t attr_size =
+		offsetofend(struct bpf_update_elem, flags);
+	unsigned int len = MIN(size, attr_size);
 
 	memcpy(&attr, data, len);
 
@@ -269,7 +272,7 @@ DEF_BPF_CMD_DECODER(BPF_MAP_UPDATE_ELEM)
 	PRINT_FIELD_X(", ", attr, value);
 	PRINT_FIELD_XVAL(", ", attr, flags, bpf_map_update_elem_flags,
 			 "BPF_???");
-	decode_attr_extra_data(tcp, data, size, sizeof(attr));
+	decode_attr_extra_data(tcp, data, size, attr_size);
 	tprints("}");
 
 	return RVAL_DECODED;
@@ -277,17 +280,19 @@ DEF_BPF_CMD_DECODER(BPF_MAP_UPDATE_ELEM)
 
 DEF_BPF_CMD_DECODER(BPF_MAP_DELETE_ELEM)
 {
-	struct {
+	struct bpf_delete_elem {
 		uint32_t map_fd;
 		uint64_t ATTRIBUTE_ALIGNED(8) key;
 	} attr = {};
-	const unsigned int len = size < sizeof(attr) ? size : sizeof(attr);
+	const size_t attr_size =
+		offsetofend(struct bpf_delete_elem, key);
+	unsigned int len = MIN(size, attr_size);
 
 	memcpy(&attr, data, len);
 
 	PRINT_FIELD_FD("{", attr, map_fd, tcp);
 	PRINT_FIELD_X(", ", attr, key);
-	decode_attr_extra_data(tcp, data, size, sizeof(attr));
+	decode_attr_extra_data(tcp, data, size, attr_size);
 	tprints("}");
 
 	return RVAL_DECODED;
@@ -299,15 +304,16 @@ DEF_BPF_CMD_DECODER(BPF_MAP_GET_NEXT_KEY)
 		uint32_t map_fd;
 		uint64_t ATTRIBUTE_ALIGNED(8) key, next_key;
 	} attr = {};
-
-	const unsigned int len = size < sizeof(attr) ? size : sizeof(attr);
+	const size_t attr_size =
+		offsetofend(struct bpf_io_elem_struct, next_key);
+	unsigned int len = MIN(size, attr_size);
 
 	memcpy(&attr, data, len);
 
 	PRINT_FIELD_FD("{", attr, map_fd, tcp);
 	PRINT_FIELD_X(", ", attr, key);
 	PRINT_FIELD_X(", ", attr, next_key);
-	decode_attr_extra_data(tcp, data, size, sizeof(attr));
+	decode_attr_extra_data(tcp, data, size, attr_size);
 	tprints("}");
 
 	return RVAL_DECODED;
@@ -413,10 +419,12 @@ bpf_obj_pin_end:
 
 DEF_BPF_CMD_DECODER(BPF_PROG_ATTACH)
 {
-	struct {
+	struct bpf_prog_attach {
 		uint32_t target_fd, attach_bpf_fd, attach_type, attach_flags;
 	} attr = {};
-	const unsigned int len = size < sizeof(attr) ? size : sizeof(attr);
+	const size_t attr_size =
+		offsetofend(struct bpf_prog_attach, attach_flags);
+	unsigned int len = MIN(size, attr_size);
 
 	memcpy(&attr, data, len);
 
@@ -425,7 +433,7 @@ DEF_BPF_CMD_DECODER(BPF_PROG_ATTACH)
 	PRINT_FIELD_XVAL(", ", attr, attach_type, bpf_attach_type, "BPF_???");
 	PRINT_FIELD_FLAGS(", ", attr, attach_flags, bpf_attach_flags,
 			  "BPF_F_???");
-	decode_attr_extra_data(tcp, data, size, sizeof(attr));
+	decode_attr_extra_data(tcp, data, size, attr_size);
 	tprints("}");
 
 	return RVAL_DECODED;
@@ -433,16 +441,18 @@ DEF_BPF_CMD_DECODER(BPF_PROG_ATTACH)
 
 DEF_BPF_CMD_DECODER(BPF_PROG_DETACH)
 {
-	struct {
+	struct bpf_prog_detach {
 		uint32_t target_fd, dummy, attach_type;
 	} attr = {};
-	const unsigned int len = size < sizeof(attr) ? size : sizeof(attr);
+	const size_t attr_size =
+		offsetofend(struct bpf_prog_detach, attach_type);
+	unsigned int len = MIN(size, attr_size);
 
 	memcpy(&attr, data, len);
 
 	PRINT_FIELD_FD("{", attr, target_fd, tcp);
 	PRINT_FIELD_XVAL(", ", attr, attach_type, bpf_attach_type, "BPF_???");
-	decode_attr_extra_data(tcp, data, size, sizeof(attr));
+	decode_attr_extra_data(tcp, data, size, attr_size);
 	tprints("}");
 
 	return RVAL_DECODED;
@@ -450,12 +460,14 @@ DEF_BPF_CMD_DECODER(BPF_PROG_DETACH)
 
 DEF_BPF_CMD_DECODER(BPF_PROG_TEST_RUN)
 {
-	struct {
+	struct bpf_prog_test {
 		uint32_t prog_fd, retval, data_size_in, data_size_out;
 		uint64_t ATTRIBUTE_ALIGNED(8) data_in, data_out;
 		uint32_t repeat, duration;
 	} attr = {};
-	const unsigned int len = size < sizeof(attr) ? size : sizeof(attr);
+	const size_t attr_size =
+		offsetofend(struct bpf_prog_test, duration);
+	unsigned int len = MIN(size, attr_size);
 
 	memcpy(&attr, data, len);
 
@@ -468,7 +480,7 @@ DEF_BPF_CMD_DECODER(BPF_PROG_TEST_RUN)
 	PRINT_FIELD_U(", ", attr, repeat);
 	PRINT_FIELD_U(", ", attr, duration);
 	tprints("}");
-	decode_attr_extra_data(tcp, data, size, sizeof(attr));
+	decode_attr_extra_data(tcp, data, size, attr_size);
 	tprints("}");
 
 	return RVAL_DECODED;
@@ -565,11 +577,13 @@ bpf_map_get_fd_by_id_end:
 
 DEF_BPF_CMD_DECODER(BPF_OBJ_GET_INFO_BY_FD)
 {
-	struct {
+	struct bpf_obj_info {
 		uint32_t bpf_fd, info_len;
 		uint64_t ATTRIBUTE_ALIGNED(8) info;
 	} attr = {};
-	const unsigned int len = size < sizeof(attr) ? size : sizeof(attr);
+	const size_t attr_size =
+		offsetofend(struct bpf_obj_info, info);
+	unsigned int len = MIN(size, attr_size);
 
 	memcpy(&attr, data, len);
 
@@ -577,7 +591,7 @@ DEF_BPF_CMD_DECODER(BPF_OBJ_GET_INFO_BY_FD)
 	PRINT_FIELD_U(", ", attr, info_len);
 	PRINT_FIELD_X(", ", attr, info);
 	tprints("}");
-	decode_attr_extra_data(tcp, data, size, sizeof(attr));
+	decode_attr_extra_data(tcp, data, size, attr_size);
 	tprints("}");
 
 	return RVAL_DECODED | RVAL_FD;
