@@ -331,6 +331,7 @@ strace_SOURCES =	\
 	utime.c		\
 	utimes.c	\
 	v4l2.c		\
+	v4l2_xlat.c	\
 	wait.c		\
 	xattr.c		\
 	xlat.c		\
