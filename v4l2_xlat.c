@@ -11,8 +11,16 @@
 #include "xlat/v4l2_pix_fmts.h"
 #include "xlat/v4l2_sdr_fmts.h"
 
+/**
+ * Print fourcc value in the form of v4l2_fourcc() macro along with the named
+ * constant, if the latter is known.
+ *
+ * @param fourcc FourCC value to print.
+ * @param xlat   Sorted xlat table with named constants.
+ * @param nmemb  Number of elements in xlat array, excluding XLAT_END.
+ */
 static void
-print_pixelformat(uint32_t fourcc, const struct xlat *xlat)
+print_pixelformat_(uint32_t fourcc, const struct xlat *xlat, size_t nmemb)
 {
 	unsigned char a[] = {
 		(unsigned char) fourcc,
@@ -61,12 +69,20 @@ print_pixelformat(uint32_t fourcc, const struct xlat *xlat)
 	tprints(")");
 
 	if (xlat) {
-		const char *pixfmt_name = xlookup(xlat, fourcc);
+		const char *pixfmt_name = xlat_search(xlat, nmemb, fourcc);
 
 		if (pixfmt_name)
 			tprints_comment(pixfmt_name);
 	}
 }
+
+/**
+ * A wrapper around pixel_format that passes ARRAY_SIZE(xlat_) as a third
+ * argument.
+ */
+#define print_pixelformat(fourcc_, xlat_) \
+	print_pixelformat_((fourcc_), (xlat_), ARRAY_SIZE(xlat_))
+
 
 void
 print_pix_fmt(uint32_t fourcc)
