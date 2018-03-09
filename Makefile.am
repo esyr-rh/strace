@@ -151,6 +151,7 @@ strace_SOURCES =	\
 	get_robust_list.c \
 	getcpu.c	\
 	getcwd.c	\
+	getpid.c	\
 	getrandom.c	\
 	hdio.c		\
 	hostname.c	\
@@ -227,6 +228,7 @@ strace_SOURCES =	\
 	perf.c		\
 	perf_event_struct.h \
 	personality.c	\
+	pidns.c		\
 	pkeys.c		\
 	poll.c		\
 	prctl.c		\

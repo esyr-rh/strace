@@ -137,6 +137,7 @@ bool not_failing_only;
 
 /* Show path associated with fd arguments */
 unsigned int show_fd_path;
+unsigned int perform_ns_resolution;
 
 static bool detach_on_execve;
 
@@ -1610,7 +1611,7 @@ init(int argc, char *argv[])
 #ifdef USE_LIBUNWIND
 	    "k"
 #endif
-	    "a:b:cCdDe:E:fFhiI:o:O:p:P:qrs:S:tTu:vVwxyz")) != EOF) {
+	    "a:b:cCdDe:E:fFhiI:o:O:p:P:qrs:S:tTu:vVwxyYz")) != EOF) {
 		switch (c) {
 		case 'a':
 			acolumn = string_to_uint(optarg);
@@ -1724,6 +1725,9 @@ init(int argc, char *argv[])
 			break;
 		case 'y':
 			show_fd_path++;
+			break;
+		case 'Y':
+			perform_ns_resolution++;
 			break;
 		case 'z':
 			not_failing_only = 1;
