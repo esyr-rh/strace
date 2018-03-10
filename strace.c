@@ -1598,7 +1598,7 @@ init(int argc, char *argv[])
 #ifdef ENABLE_STACKTRACE
 	    "k"
 #endif
-	    "a:Ab:cCdDe:E:fFhiI:o:O:p:P:qrs:S:tTu:vVwxyz")) != EOF) {
+	    "a:Ab:cCdDe:E:fFhiI:o:O:p:P:qrs:S:tTu:vVwxX:yz")) != EOF) {
 		switch (c) {
 		case 'a':
 			acolumn = string_to_uint(optarg);
@@ -1712,6 +1712,19 @@ init(int argc, char *argv[])
 			break;
 		case 'x':
 			xflag++;
+			break;
+		case 'X':
+			if (!strcmp(optarg, "raw")) {
+				xlat_verbosity = XLAT_STYLE_RAW;
+			} else if (!strcmp(optarg, "abbrev")) {
+				xlat_verbosity = XLAT_STYLE_ABBREV;
+			} else if (!strcmp(optarg, "verbose")) {
+				xlat_verbosity = XLAT_STYLE_VERBOSE;
+			} else {
+				error_msg_and_help("Unsupported argument '%s' "
+						   "for the -X option",
+						   optarg);
+			}
 			break;
 		case 'y':
 			show_fd_path++;
