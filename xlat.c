@@ -432,6 +432,11 @@ print_xlat_ex(const uint64_t val, const char *str, enum xlat_style style)
 {
 	style = get_xlat_style(style);
 
+	if (!str) {
+		print_xlat_val(val, style);
+		return;
+	}
+
 	switch (xlat_verbose(style)) {
 	case XLAT_STYLE_RAW:
 		print_xlat_val(val, style);
