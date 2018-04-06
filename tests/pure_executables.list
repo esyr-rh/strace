@@ -370,6 +370,9 @@ sigsuspend
 so_linger
 so_peercred
 sock_filter-v
+sock_filter-v-Xabbrev
+sock_filter-v-Xraw
+sock_filter-v-Xverbose
 socketcall
 sockopt-sol_netlink
 splice

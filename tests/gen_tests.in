@@ -391,6 +391,9 @@ sigsuspend	-a19 -esignal=none
 so_linger	-e trace=getsockopt,setsockopt
 so_peercred	-e trace=getsockopt
 sock_filter-v	-v -e trace=getsockopt,setsockopt
+sock_filter-v-Xabbrev	-v -e trace=getsockopt,setsockopt -X abbrev
+sock_filter-v-Xraw	-a 37 -v -e trace=getsockopt,setsockopt -X raw
+sock_filter-v-Xverbose	-v -e trace=getsockopt,setsockopt -X verbose
 socketcall	-a20
 sockopt-sol_netlink	-e trace=getsockopt,setsockopt
 splice
