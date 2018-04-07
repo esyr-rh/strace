@@ -70,7 +70,7 @@ sys_msgrcv(int msqid, void *msgp, size_t sz, kernel_long_t msgtyp,
 int
 main(void)
 {
-	const kernel_long_t mtype = (kernel_long_t) 0x7facefedbadc0dedULL;
+	const kernel_long_t mtype = (kernel_long_t) 0x7facefed5adc0dedULL;
 	struct {
 		kernel_long_t mtype;
 		char mtext[msgsz];
