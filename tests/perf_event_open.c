@@ -667,8 +667,9 @@ main(void)
 			BRANCH_TYPE_ALL "|0xfffffffffffe0000" }
 	};
 	static const struct s32_val_str clockids[] = {
-		{ 11, "CLOCK_TAI" },
-		{ ARG_STR(0xc) " /* CLOCK_??? */" },
+		{ 0, "CLOCK_REALTIME" },
+		{ 12, "CLOCK_MONOTONIC_ACTIVE" },
+		{ ARG_STR(0xd) " /* CLOCK_??? */" },
 		{ ARG_STR(0xbeeffeed) " /* CLOCK_??? */" },
 	};
 
