@@ -693,7 +693,7 @@ print_quoted_string_ex(const char *str, unsigned int size,
 
 	alloc_size = 4 * size;
 	if (alloc_size / 4 != size) {
-		error_func_msg("Out of memory");
+		error_func_msg("Out of memory: %u bytes is too much", size);
 		tprints("???");
 		return -1;
 	}
@@ -706,7 +706,8 @@ print_quoted_string_ex(const char *str, unsigned int size,
 	} else {
 		outstr = buf = malloc(alloc_size);
 		if (!buf) {
-			error_func_msg("Out of memory");
+			error_func_msg("Out of memory when tried to allocate "
+				       "%u bytes", alloc_size);
 			tprints("???");
 			return -1;
 		}
@@ -885,10 +886,15 @@ dumpiov_upto(struct tcb *const tcp, const int len, const kernel_ulong_t addr,
 	unsigned size;
 
 	size = sizeof_iov * len;
-	/* Assuming no sane program has millions of iovs */
-	if ((unsigned)len > 1024*1024 /* insane or negative size? */
-	    || (iov = malloc(size)) == NULL) {
-		error_func_msg("Out of memory");
+	if (size / sizeof_iov != (unsigned int) len) {
+		error_func_msg("Out of memory: %d iovs is too much", len);
+		return;
+	}
+
+	iov = malloc(size);
+	if (!iov) {
+		error_func_msg("Out of memory when tried to allocate %u bytes",
+			       size);
 		return;
 	}
 	if (umoven(tcp, addr, size, iov) >= 0) {
@@ -935,7 +941,8 @@ dumpstr(struct tcb *const tcp, const kernel_ulong_t addr, const int len)
 		str = malloc(len + 16);
 		if (!str) {
 			strsize = -1;
-			error_func_msg("Out of memory");
+			error_func_msg("Out of memory when tried to allocate "
+				       "%zu bytes", (size_t) (len + 16));
 			return;
 		}
 		strsize = len + 16;
