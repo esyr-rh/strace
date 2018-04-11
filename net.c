@@ -458,6 +458,7 @@ SYS_FUNC(socketpair)
 #include "xlat/socksctpoptions.h"
 #include "xlat/socktcpoptions.h"
 #include "xlat/sockudpoptions.h"
+#include "xlat/sockrxrpcoptions.h"
 #include "xlat/sockbluetoothoptions.h"
 #include "xlat/sockpnpoptions.h"
 #include "xlat/sockrdsoptions.h"
@@ -509,6 +510,9 @@ print_sockopt_fd_level_name(struct tcb *tcp, int fd, unsigned int level,
 		break;
 	case SOL_UDP:
 		printxval(sockudpoptions, name, "UDP_???");
+		break;
+	case SOL_RXRPC:
+		printxval_index(sockrxrpcoptions, name, "RXRPC_???");
 		break;
 	case SOL_BLUETOOTH:
 		printxval_search(sockbluetoothoptions, name, "BT_???");
