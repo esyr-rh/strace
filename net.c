@@ -89,6 +89,11 @@
 #endif
 #include "xlat/bt_protocols.h"
 
+#ifndef AF_CAN
+# define AF_CAN 29
+#endif
+#include "xlat/can_protocols.h"
+
 static void
 decode_sockbuf(struct tcb *const tcp, const int fd, const kernel_ulong_t addr,
 	       const kernel_ulong_t addrlen)
@@ -136,6 +141,10 @@ SYS_FUNC(socket)
 
 	case AF_NETLINK:
 		printxval(netlink_protocols, tcp->u_arg[2], "NETLINK_???");
+		break;
+
+	case AF_CAN:
+		printxval_index(can_protocols, tcp->u_arg[2], "CAN_???");
 		break;
 
 	case AF_BLUETOOTH:
