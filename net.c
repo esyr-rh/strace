@@ -94,6 +94,11 @@
 #endif
 #include "xlat/can_protocols.h"
 
+#ifndef AF_NFC
+# define AF_NFC 39
+#endif
+#include "xlat/nfc_protocols.h"
+
 #ifndef AF_KCM
 # define AF_KCM 41
 #endif
@@ -159,6 +164,11 @@ SYS_FUNC(socket)
 
 	case AF_BLUETOOTH:
 		printxval_index(bt_protocols, tcp->u_arg[2], "BTPROTO_???");
+		break;
+
+	case AF_NFC:
+		printxval_index(nfc_protocols, tcp->u_arg[2],
+				"NFC_SOCKPROTO_???");
 		break;
 
 	case AF_KCM:
