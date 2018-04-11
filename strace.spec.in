@@ -7,9 +7,6 @@ Group: Development/Debuggers
 URL: https://strace.io
 Source: https://strace.io/files/%{version}/strace-%{version}.tar.xz
 BuildRequires: gcc
-%if 0%{?fedora} >= 18 || 0%{?centos} >= 8 || 0%{?rhel} >= 8 || 0%{?suse_version} >= 1200
-BuildRequires: pkgconfig(bluez)
-%endif
 %if 0%{?fedora} >= 20 || 0%{?centos} >= 6 || 0%{?rhel} >= 6
 %define buildrequires_stacktrace BuildRequires: elfutils-devel binutils-devel
 %endif
