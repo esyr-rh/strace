@@ -434,6 +434,7 @@ SYS_FUNC(socketpair)
 #include "xlat/sockalgoptions.h"
 #include "xlat/socknfcllcpoptions.h"
 #include "xlat/sockkcmoptions.h"
+#include "xlat/socktlsoptions.h"
 
 static void
 print_sockopt_fd_level_name(struct tcb *tcp, int fd, unsigned int level,
@@ -485,6 +486,9 @@ print_sockopt_fd_level_name(struct tcb *tcp, int fd, unsigned int level,
 		break;
 	case SOL_KCM:
 		printxval(sockkcmoptions, name, "KCM_???");
+		break;
+	case SOL_TLS:
+		printxval(socktlsoptions, name, "TLS_???");
 		break;
 
 		/* Other SOL_* protocol levels still need work. */
