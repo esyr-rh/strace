@@ -94,6 +94,11 @@
 #endif
 #include "xlat/can_protocols.h"
 
+#ifndef AF_KCM
+# define AF_KCM 41
+#endif
+#include "xlat/kcm_protocols.h"
+
 #ifndef AF_SMC
 # define AF_SMC 43
 #endif
@@ -154,6 +159,10 @@ SYS_FUNC(socket)
 
 	case AF_BLUETOOTH:
 		printxval_index(bt_protocols, tcp->u_arg[2], "BTPROTO_???");
+		break;
+
+	case AF_KCM:
+		printxval_index(kcm_protocols, tcp->u_arg[2], "KCMPROTO_???");
 		break;
 
 	case AF_SMC:
