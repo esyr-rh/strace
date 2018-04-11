@@ -440,6 +440,7 @@ SYS_FUNC(socketpair)
 #include "xlat/socksctpoptions.h"
 #include "xlat/socktcpoptions.h"
 #include "xlat/sockudpoptions.h"
+#include "xlat/sockiucvoptions.h"
 #include "xlat/sockcaifoptions.h"
 #include "xlat/sockalgoptions.h"
 #include "xlat/socknfcllcpoptions.h"
@@ -487,6 +488,9 @@ print_sockopt_fd_level_name(struct tcb *tcp, int fd, unsigned int level,
 		break;
 	case SOL_UDP:
 		printxval(sockudpoptions, name, "UDP_???");
+		break;
+	case SOL_IUCV:
+		printxval(sockiucvoptions, name, "SO_???");
 		break;
 	case SOL_CAIF:
 		printxval(sockcaifoptions, name, "CAIFSO_???");
