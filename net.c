@@ -94,6 +94,11 @@
 #endif
 #include "xlat/can_protocols.h"
 
+#ifndef AF_CAIF
+# define AF_CAIF 37
+#endif
+#include "xlat/caif_protocols.h"
+
 #ifndef AF_NFC
 # define AF_NFC 39
 #endif
@@ -164,6 +169,10 @@ SYS_FUNC(socket)
 
 	case AF_BLUETOOTH:
 		printxval_index(bt_protocols, tcp->u_arg[2], "BTPROTO_???");
+		break;
+
+	case AF_CAIF:
+		printxval_index(caif_protocols, tcp->u_arg[2], "CAIFPROTO_???");
 		break;
 
 	case AF_NFC:
