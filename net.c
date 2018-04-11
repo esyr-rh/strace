@@ -432,6 +432,7 @@ SYS_FUNC(socketpair)
 #include "xlat/socktcpoptions.h"
 #include "xlat/sockudpoptions.h"
 #include "xlat/socknfcllcpoptions.h"
+#include "xlat/sockkcmoptions.h"
 
 static void
 print_sockopt_fd_level_name(struct tcb *tcp, int fd, unsigned int level,
@@ -477,6 +478,9 @@ print_sockopt_fd_level_name(struct tcb *tcp, int fd, unsigned int level,
 		break;
 	case SOL_NFC:
 		printxval_index(socknfcllcpoptions, name, "NFC_LLCP_???");
+		break;
+	case SOL_KCM:
+		printxval(sockkcmoptions, name, "KCM_???");
 		break;
 
 		/* Other SOL_* protocol levels still need work. */
