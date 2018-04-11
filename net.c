@@ -393,6 +393,7 @@ SYS_FUNC(socketpair)
 #include "xlat/sockrawoptions.h"
 #include "xlat/socksctpoptions.h"
 #include "xlat/socktcpoptions.h"
+#include "xlat/sockudpoptions.h"
 
 static void
 print_sockopt_fd_level_name(struct tcb *tcp, int fd, unsigned int level,
@@ -432,6 +433,9 @@ print_sockopt_fd_level_name(struct tcb *tcp, int fd, unsigned int level,
 		break;
 	case SOL_NETLINK:
 		printxval(socknetlinkoptions, name, "NETLINK_???");
+		break;
+	case SOL_UDP:
+		printxval(sockudpoptions, name, "UDP_???");
 		break;
 
 		/* Other SOL_* protocol levels still need work. */
