@@ -94,6 +94,11 @@
 #endif
 #include "xlat/can_protocols.h"
 
+#ifndef AF_SMC
+# define AF_SMC 43
+#endif
+#include "xlat/smc_protocols.h"
+
 static void
 decode_sockbuf(struct tcb *const tcp, const int fd, const kernel_ulong_t addr,
 	       const kernel_ulong_t addrlen)
@@ -149,6 +154,10 @@ SYS_FUNC(socket)
 
 	case AF_BLUETOOTH:
 		printxval_index(bt_protocols, tcp->u_arg[2], "BTPROTO_???");
+		break;
+
+	case AF_SMC:
+		printxval_index(smc_protocols, tcp->u_arg[2], "SMCPROTO_???");
 		break;
 
 	default:
