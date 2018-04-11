@@ -94,6 +94,11 @@
 #endif
 #include "xlat/can_protocols.h"
 
+#ifndef AF_PHONET
+# define AF_PHONET 35
+#endif
+#include "xlat/phonet_protocols.h"
+
 #ifndef AF_CAIF
 # define AF_CAIF 37
 #endif
@@ -169,6 +174,10 @@ SYS_FUNC(socket)
 
 	case AF_BLUETOOTH:
 		printxval_index(bt_protocols, tcp->u_arg[2], "BTPROTO_???");
+		break;
+
+	case AF_PHONET:
+		printxval_index(phonet_protocols, tcp->u_arg[2], "PN_PROTO_???");
 		break;
 
 	case AF_CAIF:
