@@ -94,6 +94,11 @@
 #endif
 #include "xlat/can_protocols.h"
 
+#ifndef AF_ISDN
+# define AF_ISDN 34
+#endif
+#include "xlat/isdn_protocols.h"
+
 #ifndef AF_PHONET
 # define AF_PHONET 35
 #endif
@@ -174,6 +179,10 @@ SYS_FUNC(socket)
 
 	case AF_BLUETOOTH:
 		printxval_index(bt_protocols, tcp->u_arg[2], "BTPROTO_???");
+		break;
+
+	case AF_ISDN:
+		printxval(isdn_protocols, tcp->u_arg[2], "ISDN_P_???");
 		break;
 
 	case AF_PHONET:
