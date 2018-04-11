@@ -94,6 +94,11 @@
 #endif
 #include "xlat/can_protocols.h"
 
+#ifndef AF_RXRPC
+# define AF_RXRPC 33
+#endif
+#include "xlat/rxrpc_protocols.h"
+
 #ifndef AF_ISDN
 # define AF_ISDN 34
 #endif
@@ -179,6 +184,10 @@ SYS_FUNC(socket)
 
 	case AF_BLUETOOTH:
 		printxval_index(bt_protocols, tcp->u_arg[2], "BTPROTO_???");
+		break;
+
+	case AF_RXRPC:
+		printxval(rxrpc_protocols, tcp->u_arg[2], "PF_???");
 		break;
 
 	case AF_ISDN:
