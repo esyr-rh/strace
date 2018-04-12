@@ -89,6 +89,11 @@
 #endif
 #include "xlat/bt_protocols.h"
 
+#ifndef AF_IRDA
+# define AF_IRDA 23
+#endif
+#include "xlat/irda_protocols.h"
+
 #ifndef AF_CAN
 # define AF_CAN 29
 #endif
@@ -176,6 +181,10 @@ SYS_FUNC(socket)
 
 	case AF_NETLINK:
 		printxval(netlink_protocols, tcp->u_arg[2], "NETLINK_???");
+		break;
+
+	case AF_IRDA:
+		printxval_index(can_protocols, tcp->u_arg[2], "IRDAPROTO_???");
 		break;
 
 	case AF_CAN:
