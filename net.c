@@ -467,6 +467,7 @@ SYS_FUNC(socketpair)
 #include "xlat/socksctpoptions.h"
 #include "xlat/socktcpoptions.h"
 #include "xlat/sockudpoptions.h"
+#include "xlat/sockdccpoptions.h"
 #include "xlat/socktipcoptions.h"
 #include "xlat/sockrxrpcoptions.h"
 #include "xlat/sockpppol2tpoptions.h"
@@ -521,6 +522,9 @@ print_sockopt_fd_level_name(struct tcb *tcp, int fd, unsigned int level,
 		break;
 	case SOL_UDP:
 		printxval(sockudpoptions, name, "UDP_???");
+		break;
+	case SOL_DCCP:
+		printxval_search(sockdccpoptions, name, "DCCP_SOCKOPT_???");
 		break;
 	case SOL_TIPC:
 		printxval_search(socktipcoptions, name, "TIPC_???");
