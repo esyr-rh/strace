@@ -476,6 +476,7 @@ SYS_FUNC(socketpair)
 #include "xlat/socksctpoptions.h"
 #include "xlat/socktcpoptions.h"
 #include "xlat/sockudpoptions.h"
+#include "xlat/sockirdaoptions.h"
 #include "xlat/sockllcoptions.h"
 #include "xlat/sockdccpoptions.h"
 #include "xlat/socktipcoptions.h"
@@ -532,6 +533,9 @@ print_sockopt_fd_level_name(struct tcb *tcp, int fd, unsigned int level,
 		break;
 	case SOL_UDP:
 		printxval(sockudpoptions, name, "UDP_???");
+		break;
+	case SOL_IRDA:
+		printxval_index(sockirdaoptions, name, "_???");
 		break;
 	case SOL_LLC:
 		printxval_index(sockllcoptions, name, "LLC_OPT_???");
