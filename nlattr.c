@@ -248,6 +248,22 @@ decode_nla_ifindex(struct tcb *const tcp,
 }
 
 bool
+decode_nla_ip_proto(struct tcb *const tcp,
+		    const kernel_ulong_t addr,
+		    const unsigned int len,
+		    const void *const opaque_data)
+{
+	uint8_t ip_proto;
+
+	if (len < sizeof(ip_proto))
+		return false;
+	else if (!umove_or_printaddr(tcp, addr, &ip_proto))
+		printxval(inet_protocols, ip_proto, "IPPROTO_???");
+
+	return true;
+}
+
+bool
 decode_nla_be16(struct tcb *const tcp,
 		const kernel_ulong_t addr,
 		const unsigned int len,
