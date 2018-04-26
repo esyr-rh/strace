@@ -62,14 +62,23 @@ cond_def()
 
 print_xlat()
 {
-	local val
-	val="$1"; shift
+	local line val def
+	line="$1"; shift
 
-	[ 1 = "$value_indexed" ] && printf " [%s] =" "${val}"
-	if [ -z "${val_type-}" ]; then
-		echo " XLAT(${val}),"
+	val="$(printf %s "${line}" | sed -r -n 's/^([^[:space:]]+).*$/\1/p')"
+	def="$(printf %s "${line}" |
+	       sed -r -n 's/^[^[:space:]]+[[:space:]]+([^[:space:]].*)$/\1/p')"
+
+	if [ -z "${def}"  ]; then
+		[ 1 = "$value_indexed" ] && printf " [%s] =" "${val}"
+
+		if [ -z "${val_type-}" ]; then
+			echo " XLAT(${val}),"
+		else
+			echo " XLAT_TYPE(${val_type}, ${val}),"
+		fi
 	else
-		echo " XLAT_TYPE(${val_type}, ${val}),"
+		print_xlat_pair "${def}" "${val}"
 	fi
 }
 
