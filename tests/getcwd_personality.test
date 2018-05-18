@@ -1,0 +1,51 @@
+#! /bin/sh -efux
+
+. "${srcdir=.}/init.sh"
+
+[ "${STRACE_ARCH}" = "${STRACE_NATIVE_ARCH}" ] || \
+	skip_ "Not a native personality"
+
+option_native=
+option_m32=
+option_mx32=
+count=0
+case "$STRACE_NATIVE_ARCH" in
+x86_64)
+	option_native=64
+	option_m32=32
+	option_mx32=x32
+	count=7
+	;;
+x32)
+	option_native=x32
+	option_m32=32
+	count=3
+	;;
+aarch64|powerpc64|riscv|s390x|sparc64|tile)
+	option_native=64
+	option_m32=32
+	count=3
+	;;
+*)
+	option_native=$((SIZEOF_LONG * 8))
+	count=1
+	;;
+esac
+
+check_prog grep
+
+for i in $(seq ${count}); do
+	trace_opt="?nonexistent"
+
+	[ $((i % 2)) -eq 0 ] || \
+		trace_opt="${trace_opt},getcwd@${option_native}"
+	[ $(((i / 2) % 2)) -eq 0 ] || \
+		trace_opt="${trace_opt},getcwd@${option_m32}"
+	[ $(((i / 4) % 2)) -eq 0 ] || \
+		trace_opt="${trace_opt},getcwd@${option_mx32}"
+
+	run_prog ../getcwd_native ${i} > /dev/null
+	run_strace -a 16 -e ${trace_opt} $args > "${EXP}${i}"
+	mv "$LOG" "${LOG}${i}"
+	match_diff "${LOG}${i}" "${EXP}${i}"
+done

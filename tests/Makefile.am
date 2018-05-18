@@ -170,6 +170,35 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	zeroargc \
 	# end of check_PROGRAMS
 
+PERSONALITY_TESTS =
+
+check_PROGRAMS += getcwd_native
+PERSONALITY_TESTS += getcwd_personality.test
+
+if HAVE_M32_RUNTIME
+check_PROGRAMS += getcwd_m32
+
+getcwd_m32_CC = @CC_FOR_M32@
+getcwd_m32_CFLAGS = $(AM_CPPFLAGS) @cc_flags_m32@ @CFLAGS_FOR_M32@
+
+getcwd_m32%$(EXEEXT): getcwd_m32%.o
+	$(getcwd_m32_CC) $(getcwd_m32_CFLAGS) $< -o $@
+getcwd_m32%.o: tests.h $(srcdir)/getcwd_m32.c
+	$(getcwd_m32_CC) $(getcwd_m32_CFLAGS) -c -o $@ $(srcdir)/getcwd_m32.c
+endif
+
+if HAVE_MX32_RUNTIME
+check_PROGRAMS += getcwd_mx32
+
+getcwd_mx32_CC = @CC_FOR_MX32@
+getcwd_mx32_CFLAGS = $(AM_CPPFLAGS) @cc_flags_mx32@ @CFLAGS_FOR_MX32@
+
+getcwd_mx32%$(EXEEXT): getcwd_mx32%.o
+	$(getcwd_mx32_CC) $(getcwd_mx32_CFLAGS) $< -o $@
+getcwd_mx32%.o: tests.h $(srcdir)/getcwd_mx32.c
+	$(getcwd_mx32_CC) $(getcwd_mx32_CFLAGS) -c -o $@ $(srcdir)/getcwd_mx32.c
+endif
+
 attach_f_p_LDADD = -lpthread $(LDADD)
 count_f_LDADD = -lpthread $(LDADD)
 delay_LDADD = $(clock_LIBS) $(LDADD)
@@ -332,7 +361,13 @@ MISC_TESTS = \
 	threads-execve.test \
 	# end of MISC_TESTS
 
-TESTS = $(GEN_TESTS) $(DECODER_TESTS) $(MISC_TESTS) $(STACKTRACE_TESTS)
+TESTS = \
+	$(GEN_TESTS) \
+	$(DECODER_TESTS) \
+	$(MISC_TESTS) \
+	$(STACKTRACE_TESTS) \
+	$(PERSONALITY_TESTS) \
+	# end of TESTS
 
 XFAIL_TESTS_ =
 XFAIL_TESTS_m32 = $(STACKTRACE_TESTS)
